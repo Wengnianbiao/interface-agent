@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.helianhealth.agent.mapper.agent.NodeParamConfigMapper">
+
+    <resultMap id="NodeParamConfigResultMap" type="com.helianhealth.agent.model.domain.NodeParamConfigDO">
+        <id property="configId" column="config_id"/>
+        <result property="nodeId" column="node_id"/>
+        <result property="processType" column="process_type"/>
+        <result property="sourceParamKey" column="source_param_key"/>
+        <result property="sourceParamType" column="source_param_type"/>
+        <result property="paramDesc" column="param_desc"/>
+        <result property="targetParamKey" column="target_param_key"/>
+        <result property="targetParamType" column="target_param_type"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="sort" column="sort"/>
+        <result property="mappingSource" column="mapping_source"/>
+        <result property="mappingType" column="mapping_type"/>
+        <result property="mappingRule" column="mapping_rule"/>
+        <result property="operationType" column="operation_type"/>
+    </resultMap>
+
+    <insert id="insertNodeParamConfig" parameterType="com.helianhealth.agent.model.domain.NodeParamConfigDO"
+            useGeneratedKeys="true" keyProperty="configId" keyColumn="config_id">
+        INSERT INTO node_param_config
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="processType != null">
+                process_type,
+            </if>
+            <if test="nodeId != null">
+                node_id,
+            </if>
+            <if test="parentId != null">
+                parent_id,
+            </if>
+            <if test="sourceParamKey != null">
+                source_param_key,
+            </if>
+            <if test="sourceParamType != null">
+                source_param_type,
+            </if>
+            <if test="paramDesc != null">
+                param_desc,
+            </if>
+            <if test="targetParamKey != null">
+                target_param_key,
+            </if>
+            <if test="targetParamType != null">
+                target_param_type,
+            </if>
+            <if test="sort != null">
+                sort,
+            </if>
+            <if test="mappingSource != null">
+                mapping_source,
+            </if>
+            <if test="mappingType != null">
+                mapping_type,
+            </if>
+            <if test="mappingRule != null">
+                mapping_rule,
+            </if>
+            <if test="operationType != null">
+                operation_type,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="processType != null">
+                #{processType,jdbcType=VARCHAR},
+            </if>
+            <if test="nodeId != null">
+                #{nodeId,jdbcType=INTEGER},
+            </if>
+            <if test="parentId != null">
+                #{parentId,jdbcType=INTEGER},
+            </if>
+            <if test="sourceParamKey != null">
+                #{sourceParamKey,jdbcType=VARCHAR},
+            </if>
+            <if test="sourceParamType != null">
+                #{sourceParamType,jdbcType=VARCHAR},
+            </if>
+            <if test="paramDesc != null">
+                #{paramDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="targetParamKey != null">
+                #{targetParamKey,jdbcType=VARCHAR},
+            </if>
+            <if test="targetParamType != null">
+                #{targetParamType,jdbcType=VARCHAR},
+            </if>
+            <if test="sort != null">
+                #{sort,jdbcType=INTEGER},
+            </if>
+            <if test="mappingSource != null">
+                #{mappingSource,jdbcType=VARCHAR},
+            </if>
+            <if test="mappingType != null">
+                #{mappingType,jdbcType=VARCHAR},
+            </if>
+            <if test="mappingRule != null">
+                #{mappingRule,jdbcType=VARCHAR},
+            </if>
+            <if test="operationType != null">
+                #{operationType,jdbcType=VARCHAR},
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 根据节点ID查询参数前置配置列表 -->
+    <select id="selectPreProcessConfigByNodeId" resultMap="NodeParamConfigResultMap">
+        SELECT *
+        FROM node_param_config
+        WHERE node_id = #{nodeId}
+        AND process_type = 'PRE_PROCESS'
+    </select>
+
+    <!-- 根据节点ID查询参数后置配置列表 -->
+    <select id="selectPostProcessConfigByNodeId" resultMap="NodeParamConfigResultMap">
+        SELECT *
+        FROM node_param_config
+        WHERE node_id = #{nodeId}
+        AND process_type = 'POST_PROCESS'
+    </select>
+
+    <select id="selectAllParamConfig" resultMap="NodeParamConfigResultMap">
+        SELECT *
+        FROM node_param_config
+        <where>
+            <if test="nodeId != null">
+                node_id = #{nodeId}
+            </if>
+            <if test="processType != null">
+                AND process_type = #{processType}
+            </if>
+        </where>
+    </select>
+</mapper>

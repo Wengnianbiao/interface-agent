@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.helianhealth.agent.mapper.agent.InterfaceFlowNodeMapper">
+
+    <resultMap id="InterfaceFlowNodeResultMap" type="com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO">
+        <id property="nodeId" column="node_id"/>
+        <result property="nodeName" column="node_name"/>
+        <result property="flowId" column="flow_id"/>
+        <result property="paramFilterExpr" column="param_filter_expr"/>
+        <result property="nodeType" column="node_type"/>
+        <result property="metaInfo" column="meta_info"/>
+        <result property="scheduleExpr" column="schedule_expr"/>
+        <result property="scheduleParamSourceType" column="schedule_param_source_type"/>
+    </resultMap>
+
+    <insert id="createNode" parameterType="com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO">
+        INSERT INTO interface_workflow_node
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="nodeName != null">
+                node_name,
+            </if>
+            <if test="flowId != null">
+                flow_id,
+            </if>
+            <if test="paramFilterExpr != null">
+                param_filter_expr,
+            </if>
+            <if test="nodeType != null">
+                node_type,
+            </if>
+            <if test="metaInfo != null">
+                meta_info,
+            </if>
+            <if test="scheduleExpr != null">
+                schedule_expr,
+            </if>
+            <if test="scheduleParamSourceType != null">
+                schedule_param_source_type,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="nodeName != null">
+                #{nodeName,jdbcType=VARCHAR},
+            </if>
+            <if test="flowId != null">
+                #{flowId,jdbcType=INTEGER},
+            </if>
+            <if test="paramFilterExpr != null">
+                #{paramFilterExpr,jdbcType=VARCHAR},
+            </if>
+            <if test="nodeType != null">
+                #{nodeType,jdbcType=VARCHAR},
+            </if>
+            <if test="metaInfo != null">
+                #{metaInfo,jdbcType=VARCHAR},
+            </if>
+            <if test="scheduleExpr != null">
+                #{scheduleExpr,jdbcType=VARCHAR},
+            </if>
+            <if test="scheduleParamSourceType != null">
+                #{scheduleParamSourceType,jdbcType=VARCHAR},
+            </if>
+        </trim>
+    </insert>
+
+    <select id="selectByNodeId" resultMap="InterfaceFlowNodeResultMap">
+        select *
+        from interface_workflow_node
+        where node_id = #{nodeId}
+    </select>
+
+    <select id="selectAllNodes" resultMap="InterfaceFlowNodeResultMap">
+        select *
+        from interface_workflow_node
+        <where>
+            <if test="flowId != null">
+                flow_id = #{flowId}
+            </if>
+        </where>
+    </select>
+</mapper>

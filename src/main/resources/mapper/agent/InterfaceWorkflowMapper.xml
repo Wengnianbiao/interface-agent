@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.helianhealth.agent.mapper.agent.InterfaceWorkflowMapper">
+
+    <resultMap id="BaseResultMap" type="com.helianhealth.agent.model.domain.InterfaceWorkflowDO">
+        <id column="flow_id" property="flowId" />
+        <result column="flow_name" property="flowName" />
+        <result column="interface_uri" property="interfaceUri" />
+        <result column="content_type" property="contentType" />
+        <result column="content_meta_info" property="contentMetaInfo" />
+        <!-- 为 firstFlowNodes 绑定类型处理器 -->
+        <result column="first_flow_nodes"
+                property="firstFlowNodes"
+                typeHandler="com.helianhealth.agent.config.ListIntegerTypeHandler"
+                jdbcType="VARCHAR" />
+
+        <result column="status" property="status" />
+    </resultMap>
+    <insert id="createWorkflow">
+        insert into interface_workflow (flow_name, interface_uri, first_flow_nodes, status)
+        values(#{flowName}, #{interfaceUri}, #{firstFlowNodes, typeHandler=com.helianhealth.agent.config.ListIntegerTypeHandler}, #{status})
+    </insert>
+
+    <select id="selectByInterfaceUri" resultMap="BaseResultMap">
+        select *
+        from interface_workflow
+        where interface_uri = #{apiUri}
+        and status = 1
+    </select>
+    <select id="selectAllWorkflows" resultMap="BaseResultMap">
+        select *
+        from interface_workflow
+        where status = 1
+    </select>
+</mapper>

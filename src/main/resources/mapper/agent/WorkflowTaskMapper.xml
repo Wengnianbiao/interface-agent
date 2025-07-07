@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.helianhealth.agent.quartz.mapper.WorkflowTaskMapper">
+
+
+    <select id="selectAllTask" resultType="com.helianhealth.agent.quartz.model.dto.WorkflowTaskDTO">
+        SELECT
+            id,
+            workflow_id AS workflowId,
+            task_desc AS taskDesc,
+            cron_expression AS cronExpression,
+            open_status AS openStatus,
+            params,
+            latest_execute_time AS latestExecuteTime
+        FROM workflow_task
+    </select>
+</mapper>

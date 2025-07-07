@@ -1,0 +1,26 @@
+spring:
+  profiles:
+    active: ${profiles.active}
+  application:
+    name: interface-agent
+
+  jackson:
+    time-zone: Asia/Shanghai
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: -1
+      max-request-size: -1
+  main:
+    allow-bean-definition-overriding: true
+
+#日志配置 默认配置 后期切换
+logging:
+  config: classpath:logback-spring.xml
+
+server:
+  servlet:
+    encoding:
+      charset: "UTF-8"
+      force: true
+      enabled: true

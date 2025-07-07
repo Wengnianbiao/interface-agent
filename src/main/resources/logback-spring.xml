@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration status="INFO" monitorInterval="30">
+    <contextName>interfaceLog</contextName>
+
+    <springProperty name="appName" scope="context" source="spring.application.name" defaultValue="interface-agent"/>
+    <!-- 日志保存路径前缀 -->
+    <property name="fileNamePrefix" value="./${appName}"/>
+    <!-- 日志输出格式 -->
+    <property name="patternLayout" value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %X{method} => %msg%n"/>
+
+    <!-- console: 控制台输出配置 -->
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+        <target>SYSTEM_OUT</target>
+        <encoder>
+            <pattern>${patternLayout}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- RollingFileInfo: INFO 级别滚动配置 -->
+    <appender name="RollingFileInfo" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${fileNamePrefix}/${appName}_info.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${fileNamePrefix}/info/${appName}_info-%d{yyyy-MM-dd}-%i.log.gz</FileNamePattern>
+            <MaxHistory>30</MaxHistory>
+            <MaxFileSize>100MB</MaxFileSize>
+            <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+        <!-- ThresholdFilter : 日志输出过滤 -->
+        <!-- level="info": 日志级别, onMatch="ACCEPT": 级别在 info 之上则接受, onMismatch="DENY": 级别在 info 之下则拒绝 -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>info</level>
+        </filter>
+        <encoder>
+            <pattern>${patternLayout}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- RollingFileError: ERROR 级别滚动配置 -->
+    <appender name="RollingFileError" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${fileNamePrefix}/${appName}_error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${fileNamePrefix}/error/${appName}_error-%d{yyyy-MM-dd}-%i.log.gz</FileNamePattern>
+            <MaxHistory>30</MaxHistory>
+            <MaxFileSize>100MB</MaxFileSize>
+            <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>error</level>
+        </filter>
+        <encoder>
+            <pattern>${patternLayout}</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="Console"/>
+        <appender-ref ref="RollingFileInfo"/>
+        <appender-ref ref="RollingFileError"/>
+    </root>
+
+</configuration>

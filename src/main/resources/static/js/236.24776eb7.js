@@ -1,0 +1,2 @@
+"use strict";(self["webpackChunkinterface_agent"]=self["webpackChunkinterface_agent"]||[]).push([[236],{8236:function(e,n,t){t.r(n),t.d(n,{default:function(){return i}});var a=function(){var e=this;e._self._c;return e._m(0)},r=[function(){var e=this,n=e._self._c;return n("div",{staticClass:"dashboard"},[n("p",[e._v("欢迎使用可配置接口后台")])])}],s={name:"SystemDashboard"},u=s,c=t(1656),f=(0,c.A)(u,a,r,!1,null,"ca2248f0",null),i=f.exports}}]);
+//# sourceMappingURL=236.24776eb7.js.map
