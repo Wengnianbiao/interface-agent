@@ -106,18 +106,27 @@ public class WebServiceClientProxy extends AbstractClientProxy {
             jsonArray.add(ParamNodeUtils.convertNodesToMap(arrayChildren));
             node.setChildren(arrayChildren);
         } else if (config.getSourceParamType() == ParamType.ARRAY && sourceValue != null) {
-            // 源参数是数组，需要处理数组中的每个元素
-            List<?> sourceList = (List<?>) sourceValue;
+            // 目标参数是数组,原参数可能是数组也可能是单个对象(因为xml解析的时候还是按照Map解析)
             List<ParamTreeNode> allArrayChildren = new ArrayList<>();
-
-            for (Object item : sourceList) {
+            if (sourceValue instanceof List) {
+                List<?> sourceList = (List<?>) sourceValue;
+                for (Object item : sourceList) {
+                    List<ParamTreeNode> arrayChildren = buildParamTree(allNodes,
+                            config.getConfigId(),
+                            JsonUtils.toMap(item),
+                            rootBusinessData);
+                    allArrayChildren.addAll(arrayChildren);
+                    jsonArray.add(ParamNodeUtils.convertNodesToMap(arrayChildren));
+                }
+            } else if (sourceValue instanceof Map) {
                 List<ParamTreeNode> arrayChildren = buildParamTree(allNodes,
                         config.getConfigId(),
-                        JsonUtils.toMap(item),
+                        JsonUtils.toMap(sourceValue),
                         rootBusinessData);
                 allArrayChildren.addAll(arrayChildren);
                 jsonArray.add(ParamNodeUtils.convertNodesToMap(arrayChildren));
             }
+
             node.setChildren(allArrayChildren);
         } else {
             // 其他情况创建空数组
