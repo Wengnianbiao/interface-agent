@@ -136,7 +136,13 @@ public class HttpClientProxy extends AbstractClientProxy {
                             config.getConfigId(),
                             JsonUtils.toMap(item),
                             rootBusinessData);
-                    jsonArray.add(ParamNodeUtils.convertNodesToMap(arrayChildren));
+                    // 提取单个节点的值
+                    if (arrayChildren != null && arrayChildren.size() == 1) {
+                        ParamTreeNode singleNode = arrayChildren.get(0);
+                        jsonArray.add(singleNode.getParamValue());
+                    } else {
+                        jsonArray.add(ParamNodeUtils.convertNodesToMap(arrayChildren));
+                    }
                 }
                 // 数组是嵌套结构只能通过value去保持这种嵌套结构
                 node.setParamValue(jsonArray);
