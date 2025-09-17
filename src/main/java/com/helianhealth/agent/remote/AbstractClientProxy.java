@@ -1,5 +1,8 @@
 package com.helianhealth.agent.remote;
 
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONException;
+import com.alibaba.fastjson2.JSONObject;
 import com.helianhealth.agent.enums.MappingType;
 import com.helianhealth.agent.mapper.agent.NodeParamConfigMapper;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
@@ -11,6 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -70,7 +74,41 @@ public abstract class AbstractClientProxy implements InterfaceClientProxy, Param
 
         List<ParamTreeNode> rootNodes = buildParamTree(nodeConfigs, null, response, businessData);
 
-        return ParamNodeUtils.convertNodesToMap(rootNodes);
+        return convertParamTreeToMap(flowNode, rootNodes);
+    }
+
+    private Map<String, Object> convertParamTreeToMap(InterfaceWorkflowNodeDO flowNode, List<ParamTreeNode> paramTree) {
+
+        // 获取节点的元信息
+        String metaInfo = flowNode.getMetaInfo();
+        if (StringUtils.isEmpty(metaInfo)) {
+            // 如果没有元信息，使用默认转换
+            return ParamNodeUtils.convertNodesToMap(paramTree);
+        }
+
+        try {
+            // 解析metaInfo为JSON对象
+            JSONObject metaJson = JSON.parseObject(metaInfo);
+            // 获取响应类型，默认为json
+            String responseType = metaJson.getString("responseType");
+            if (StringUtils.isEmpty(responseType)) {
+                responseType = "json";
+            }
+
+            // 根据响应类型进行不同处理
+            if ("xml".equalsIgnoreCase(responseType)) {
+                // XML类型处理：可能需要将参数树转换为XML格式的Map结构
+                return ParamNodeUtils.convertToXmlFormatMap(paramTree);
+            } else {
+                // JSON类型处理：使用默认的JSON格式转换
+                return ParamNodeUtils.convertToJsonFormatMap(paramTree);
+            }
+        } catch (JSONException e) {
+            // 处理JSON解析异常
+            log.error("解析节点元信息失败，nodeId: {}, metaInfo: {}", flowNode.getNodeId(), metaInfo, e);
+            // 解析失败时使用默认转换
+            return ParamNodeUtils.convertNodesToMap(paramTree);
+        }
     }
 
     /**

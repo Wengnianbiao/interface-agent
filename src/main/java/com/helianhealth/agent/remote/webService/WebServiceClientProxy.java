@@ -105,7 +105,7 @@ public class WebServiceClientProxy extends AbstractClientProxy {
                     rootBusinessData);
             jsonArray.add(ParamNodeUtils.convertNodesToMap(arrayChildren));
             node.setChildren(arrayChildren);
-        } else if (config.getSourceParamType() == ParamType.ARRAY && sourceValue instanceof List) {
+        } else if (config.getSourceParamType() == ParamType.ARRAY && sourceValue != null) {
             // 源参数是数组，需要处理数组中的每个元素
             List<?> sourceList = (List<?>) sourceValue;
             List<ParamTreeNode> allArrayChildren = new ArrayList<>();

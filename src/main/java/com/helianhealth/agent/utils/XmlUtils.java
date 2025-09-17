@@ -68,7 +68,6 @@ public class XmlUtils {
             // 获取命名空间配置
             String namespaceURI = (String) metaMap.get("responseNamespace");
             String resultElementName = (String) metaMap.getOrDefault("resultElementName", "MessageInResult");
-            String responseType = (String) metaMap.getOrDefault("responseType", "xml");
 
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
