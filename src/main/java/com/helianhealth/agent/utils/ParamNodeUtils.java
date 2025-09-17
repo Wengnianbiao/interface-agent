@@ -55,7 +55,7 @@ public class ParamNodeUtils {
                     for (ParamTreeNode child : node.getChildren()) {
                         // 转换子节点为Map或值
                         Object childValue = child.getChildren() != null && !child.getChildren().isEmpty()
-                                ? convertToXmlFormatMap(child.getChildren())
+                                ? convertToJsonFormatMap(child.getChildren())
                                 : child.getParamValue();
                         jsonArray.add(childValue);
                     }
