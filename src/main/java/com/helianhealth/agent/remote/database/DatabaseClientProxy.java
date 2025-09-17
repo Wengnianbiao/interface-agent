@@ -12,6 +12,7 @@ import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
 import com.helianhealth.agent.model.domain.NodeParamConfigDO;
 import com.helianhealth.agent.model.dto.ParamTreeNode;
 import com.helianhealth.agent.remote.AbstractClientProxy;
+import com.helianhealth.agent.remote.ParamResolver;
 import com.helianhealth.agent.utils.JsonUtils;
 import com.helianhealth.agent.utils.ParamNodeUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -32,161 +33,24 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DatabaseClientProxy extends AbstractClientProxy {
 
-    private final DatabaseApiClientManager clientManager;
+    private final DatabaseSqlHandler sqlHandler;
 
-    public DatabaseClientProxy(NodeParamConfigMapper nodeMapper, DatabaseApiClientManager clientManager) {
+    public DatabaseClientProxy(NodeParamConfigMapper nodeMapper, DatabaseSqlHandler sqlHandler) {
         super(nodeMapper);
-        this.clientManager = clientManager;
+        this.sqlHandler = sqlHandler;
     }
 
     @Override
     public Map<String, Object> doInvoke(InterfaceWorkflowNodeDO flowNode, List<ParamTreeNode> params) {
-        // 数据库中的数据的处理
-        Map<String, Object> metaInfo = JsonUtils.toMap(flowNode.getMetaInfo());
-        String viewName = (String) metaInfo.get("viewName");
-        String sql = buildSelectSql(viewName, params);
-
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
         try {
-            conn = clientManager.getConnection(flowNode.getMetaInfo());
-            stmt = conn.prepareStatement(sql);
-
-            int paramIndex = 1;
-            for (ParamTreeNode param : params) {
-                Object value = param.getParamValue();
-                OperationType operationType = param.getOperationType();
-
-                if (value == null || operationType == null) {
-                    continue;
-                }
-
-                switch (operationType) {
-                    case LIKE:
-                        stmt.setObject(paramIndex++, "%" + value + "%");
-                        break;
-                    case IN:
-                    case NOT_IN:
-                        if (value instanceof List) {
-                            List<?> list = (List<?>) value;
-                            StringBuilder inClause = new StringBuilder();
-                            for (int i = 0; i < list.size(); i++) {
-                                if (i > 0) {
-                                    inClause.append(",");
-                                }
-                                inClause.append("?");
-                                stmt.setObject(paramIndex++, list.get(i));
-                            }
-                            String sqlString = stmt.toString();
-                            sqlString = sqlString.replaceFirst("\\?", inClause.toString());
-                            // 先关闭原来的stmt
-                            stmt.close();
-                            // 重新创建PreparedStatement
-                            stmt = conn.prepareStatement(sqlString);
-                        }
-                        break;
-                    case IS_NULL:
-                    case IS_NOT_NULL:
-                        break;
-                    default:
-                        stmt.setObject(paramIndex++, value);
-                }
-            }
-
-            rs = stmt.executeQuery();
-            return convertResultSetToMap(rs);
+            // 构建SQL查询语句
+            String sql = sqlHandler.resolveParamNodes(flowNode, params);
+            // 执行SQL查询并转化为Map
+            return sqlHandler.invokeSqlAndConvertResult(flowNode, sql);
         } catch (Exception e) {
-            log.error("数据库查询异常", e);
-            throw InvokeBusinessException.DATABASE_EXECUTE_ERROR.toException();
-        } finally {
-            // 手动关闭资源，避免内存泄漏
-            try {
-                if (rs != null) rs.close();
-                if (stmt != null) stmt.close();
-                if (conn != null) conn.close();
-            } catch (SQLException ex) {
-                log.error("关闭数据库资源异常", ex);
-            }
+            log.error("数据库调用失败", e);
+            throw new RuntimeException("数据库调用失败: " + e.getMessage(), e);
         }
-    }
-
-    /**
-     * 构建SQL查询语句
-     */
-    /**
-     * 构建SQL查询语句，使用节点的operationType作为条件操作符
-     */
-    private String buildSelectSql(String viewName, List<ParamTreeNode> params) {
-        StringBuilder sql = new StringBuilder("SELECT * FROM ").append(viewName);
-
-        // 过滤出有值且有操作类型的参数节点
-        List<ParamTreeNode> validParams = params.stream()
-                .filter(node -> node.getParamValue() != null)
-                .filter(node -> node.getOperationType() != null)
-                .collect(Collectors.toList());
-
-        if (!validParams.isEmpty()) {
-            sql.append(" WHERE ");
-
-            for (ParamTreeNode param : validParams) {
-                String paramKey = param.getParamKey();
-                OperationType operationType = param.getOperationType();
-
-                // 根据不同的操作类型添加相应的条件表达式
-                switch (operationType) {
-                    case LIKE:
-                        // LIKE操作需要处理通配符
-                        sql.append(paramKey).append(" LIKE ? AND ");
-                        break;
-                    case IN:
-                    case NOT_IN:
-                        // IN和NOT IN需要处理值列表
-                        sql.append(paramKey).append(" ").append(operationType.getOperator()).append(" (?) AND ");
-                        break;
-                    case IS_NULL:
-                    case IS_NOT_NULL:
-                        // IS NULL和IS NOT NULL不需要参数值
-                        sql.append(paramKey).append(" ").append(operationType.getOperator()).append(" AND ");
-                        break;
-                    default:
-                        // 其他操作符使用标准格式
-                        sql.append(paramKey).append(" ").append(operationType.getOperator()).append(" ? AND ");
-                }
-            }
-
-            // 移除最后的 " AND "
-            sql.delete(sql.length() - 5, sql.length());
-        }
-
-        return sql.toString();
-    }
-
-    /**
-     * 将结果集转换为JSON字符串
-     */
-    private Map<String, Object> convertResultSetToMap(ResultSet rs) throws SQLException {
-        // 用于存储所有行数据的列表
-        List<Map<String, Object>> dataList = new ArrayList<>();
-        ResultSetMetaData metaData = rs.getMetaData();
-        int columnCount = metaData.getColumnCount();
-
-        while (rs.next()) {
-            // 存储单行数据的Map
-            Map<String, Object> rowMap = new HashMap<>();
-            for (int i = 1; i <= columnCount; i++) {
-                String columnName = metaData.getColumnName(i);
-                Object value = rs.getObject(i);
-                rowMap.put(columnName, value);
-            }
-            dataList.add(rowMap);
-        }
-
-        // 构建最终要返回的Map，包含数据列表和总行数
-        Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("data", dataList);
-        resultMap.put("total", dataList.size());
-        return resultMap;
     }
 
     @Override

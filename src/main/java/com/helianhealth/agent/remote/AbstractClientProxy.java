@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONException;
 import com.alibaba.fastjson2.JSONObject;
 import com.helianhealth.agent.enums.MappingType;
+import com.helianhealth.agent.enums.NodeType;
 import com.helianhealth.agent.mapper.agent.NodeParamConfigMapper;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
 import com.helianhealth.agent.model.domain.NodeParamConfigDO;
@@ -100,8 +101,20 @@ public abstract class AbstractClientProxy implements InterfaceClientProxy, Param
                 // XML类型处理：可能需要将参数树转换为XML格式的Map结构
                 return ParamNodeUtils.convertToXmlFormatMap(paramTree);
             } else {
-                // JSON类型处理：使用默认的JSON格式转换
-                return ParamNodeUtils.convertToJsonFormatMap(paramTree);
+                NodeType nodeType = flowNode.getNodeType();
+                switch (nodeType) {
+                    case DATABASE:
+                    case HTTP:
+                        // HTTP类型处理：可能需要将参数树转换为HTTP请求参数
+                        // 数据库类型处理：可能需要将参数树转换为数据库查询语句
+                        return ParamNodeUtils.convertNodesToMap(paramTree);
+                    case WEBSERVICE:
+                        // WebService类型处理：可能需要将参数树转换为WebService请求参数
+                        return ParamNodeUtils.convertToJsonFormatMap(paramTree);
+                    default:
+                        // 默认处理：将参数树转换为JSON格式的Map结构
+                        return ParamNodeUtils.convertNodesToMap(paramTree);
+                }
             }
         } catch (JSONException e) {
             // 处理JSON解析异常
@@ -158,6 +171,7 @@ public abstract class AbstractClientProxy implements InterfaceClientProxy, Param
         ParamTreeNode node = ParamTreeNode.builder()
                 .paramKey(config.getTargetParamKey())
                 .paramType(config.getTargetParamType())
+                .operationType(config.getOperationType())
                 .build();
 
         // 不同的节点类型处理方式不同
