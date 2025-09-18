@@ -11,6 +11,7 @@ import com.helianhealth.agent.utils.JsonUtils;
 import com.helianhealth.agent.utils.ParamNodeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -94,8 +95,8 @@ public class WebServiceClientProxy extends AbstractClientProxy {
                                       Map<String, Object> businessData,
                                       Map<String, Object> rootBusinessData,
                                       ParamTreeNode node) {
-        Object sourceValue = businessData.get(config.getSourceParamKey());
-        JSONArray jsonArray = new JSONArray();
+        String sourceParamKey = config.getSourceParamKey();
+        Object sourceValue = getSourceValue(sourceParamKey, businessData);
 
         if (config.getSourceParamType() == ParamType.OBJECT && sourceValue != null) {
             // 源参数是Object，包装成大小为1的数组
@@ -103,7 +104,6 @@ public class WebServiceClientProxy extends AbstractClientProxy {
                     config.getConfigId(),
                     JsonUtils.toMap(sourceValue),
                     rootBusinessData);
-            jsonArray.add(ParamNodeUtils.convertNodesToMap(arrayChildren));
             node.setChildren(arrayChildren);
         } else if (config.getSourceParamType() == ParamType.ARRAY && sourceValue != null) {
             // 目标参数是数组,原参数可能是数组也可能是单个对象(因为xml解析的时候还是按照Map解析)
@@ -116,7 +116,6 @@ public class WebServiceClientProxy extends AbstractClientProxy {
                             JsonUtils.toMap(item),
                             rootBusinessData);
                     allArrayChildren.addAll(arrayChildren);
-                    jsonArray.add(ParamNodeUtils.convertNodesToMap(arrayChildren));
                 }
             } else if (sourceValue instanceof Map) {
                 List<ParamTreeNode> arrayChildren = buildParamTree(allNodes,
@@ -124,7 +123,6 @@ public class WebServiceClientProxy extends AbstractClientProxy {
                         JsonUtils.toMap(sourceValue),
                         rootBusinessData);
                 allArrayChildren.addAll(arrayChildren);
-                jsonArray.add(ParamNodeUtils.convertNodesToMap(arrayChildren));
             }
 
             node.setChildren(allArrayChildren);
@@ -132,5 +130,28 @@ public class WebServiceClientProxy extends AbstractClientProxy {
             // 其他情况创建空数组
             node.setChildren(new ArrayList<>());
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object getSourceValue(String sourceParamKey, Map<String, Object> businessData) {
+        if (businessData == null || StringUtils.isEmpty(sourceParamKey)) {
+            return null;
+        }
+        String[] keys = sourceParamKey.split("\\.");
+        Object current = businessData;
+
+        for (String key : keys) {
+            if (!(current instanceof Map)) {
+                return null; // 非 Map 类型无法继续深入
+            }
+
+            Map<String, Object> currentMap = (Map<String, Object>) current;
+            current = currentMap.get(key);
+            if (current == null) {
+                return null;
+            }
+        }
+
+        return current;
     }
 }
