@@ -24,6 +24,11 @@ public enum MappingType {
     EXPRESSION,
 
     /**
+     * Bean表达式映射:主要场景还是查体软表完成字段映射
+     */
+    BEAN_EXPRESSION,
+
+    /**
      * 直接映射,兼容数组的情况
      */
     DIRECT
