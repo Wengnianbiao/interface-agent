@@ -39,7 +39,7 @@ public enum ParamType {
     ARRAY,
 
     /**
-     * 接口入参就是单纯的数组结构
+     * 接口入参就是数组
      */
     PURE_ARRAY,
 

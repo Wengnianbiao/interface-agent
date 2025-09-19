@@ -121,7 +121,13 @@ public class HttpClientProxy extends AbstractClientProxy {
                     config.getConfigId(),
                     JsonUtils.toMap(sourceValue),
                     rootBusinessData);
-            jsonArray.add(ParamNodeUtils.convertNodesToMap(arrayChildren));
+            // 提取单个节点的值
+            if (arrayChildren != null && arrayChildren.size() == 1) {
+                ParamTreeNode singleNode = arrayChildren.get(0);
+                jsonArray.add(singleNode.getParamValue());
+            } else {
+                jsonArray.add(ParamNodeUtils.convertNodesToMap(arrayChildren));
+            }
             node.setParamValue(jsonArray);
         } else if (config.getSourceParamType() == ParamType.ARRAY && sourceValue instanceof List) {
             // 情况2: 源参数是数组，需要处理数组中的每个元素
@@ -149,11 +155,17 @@ public class HttpClientProxy extends AbstractClientProxy {
             }
         } else {
             // 兼容单个Object转化成List的场景
-            List<ParamTreeNode> paramNodeDTOS = buildParamTree(allNodes,
+            List<ParamTreeNode> arrayChildren = buildParamTree(allNodes,
                     config.getConfigId(),
                     businessData,
                     rootBusinessData);
-            jsonArray.add(ParamNodeUtils.convertNodesToMap(paramNodeDTOS));
+            // 提取单个节点的值
+            if (arrayChildren != null && arrayChildren.size() == 1) {
+                ParamTreeNode singleNode = arrayChildren.get(0);
+                jsonArray.add(singleNode.getParamValue());
+            } else {
+                jsonArray.add(ParamNodeUtils.convertNodesToMap(arrayChildren));
+            }
             node.setParamValue(jsonArray);
         }
     }
