@@ -181,6 +181,7 @@ public abstract class AbstractClientProxy implements InterfaceClientProxy, Param
                 processObjectNodeType(config, allNodes, businessData, sourceBusinessData, node);
                 break;
             case ARRAY:
+            case PURE_ARRAY:
                 // 数组类型处理
                 processArrayNodeType(config, allNodes, businessData, sourceBusinessData, node);
                 break;

@@ -122,7 +122,7 @@ public class HttpClientProxy extends AbstractClientProxy {
                     JsonUtils.toMap(sourceValue),
                     rootBusinessData);
             jsonArray.add(ParamNodeUtils.convertNodesToMap(arrayChildren));
-            node.setChildren(arrayChildren);
+            node.setParamValue(jsonArray);
         } else if (config.getSourceParamType() == ParamType.ARRAY && sourceValue instanceof List) {
             // 情况2: 源参数是数组，需要处理数组中的每个元素
             List<?> sourceList = (List<?>) sourceValue;
