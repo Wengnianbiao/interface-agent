@@ -14,7 +14,7 @@ public enum ScheduleParamSourceType {
     ORIGINAL,
 
     /**
-     * 当前节点出参
+     * 上个节点响应
      */
-    CURRENT_OUTPUT
+    PRE_RESPONSE
 }

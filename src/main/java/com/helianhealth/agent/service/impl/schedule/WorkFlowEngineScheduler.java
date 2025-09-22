@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 工作流引擎调度器
@@ -79,14 +80,11 @@ public class WorkFlowEngineScheduler {
     private Map<String, Object> determineNextNodeParam(ScheduleParamSourceType paramSourceType,
                                                        Map<String, Object> businessData,
                                                        Map<String, Object> preFlowNodeResponse) {
-        switch (paramSourceType) {
-            case ORIGINAL:
-                return businessData;
-            case CURRENT_OUTPUT:
-                return preFlowNodeResponse;
-            default:
-                return null;
+
+        if (Objects.requireNonNull(paramSourceType) == ScheduleParamSourceType.ORIGINAL) {
+            return businessData;
         }
+        return preFlowNodeResponse;
     }
 
     private void postParamProcessor(String paramFilterExpr, Map<String, Object> businessData) {
