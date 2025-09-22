@@ -51,6 +51,6 @@ public class QuartzJobInit implements ApplicationListener<ApplicationReadyEvent>
 //                log.error("定时任务初始化失败", e);
 //            }
 //        });
-        log.info("定时任务初始化完成");
+//        log.info("定时任务初始化完成");
     }
 }

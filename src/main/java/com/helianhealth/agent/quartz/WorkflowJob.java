@@ -25,7 +25,7 @@ public class WorkflowJob implements Job {
     private final WorkFlowEngineScheduler workFlowEngineScheduler;
 
     @Override
-    public void execute(JobExecutionContext context) throws JobExecutionException {
+    public void execute(JobExecutionContext context) {
         doService(context);
     }
 

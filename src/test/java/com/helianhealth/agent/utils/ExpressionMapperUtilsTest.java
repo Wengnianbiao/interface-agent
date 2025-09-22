@@ -2,12 +2,10 @@ package com.helianhealth.agent.utils;
 
 import com.alibaba.fastjson2.JSON;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -16,6 +14,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @SpringBootTest
 public class ExpressionMapperUtilsTest {
@@ -146,16 +150,12 @@ public class ExpressionMapperUtilsTest {
         List<PatientInfoHis> patientInfoList = new ArrayList<>();
         PatientInfoHis patientInfo = new PatientInfoHis();
         patientInfo.setPatientId("123445");
-        patientInfo.setClinicId("hl123244");
-        patientInfo.setPatientCode("102568390903432");
-        patientInfo.setName("张三");
-        patientInfo.setSex("男");
-        patientInfo.setAge(25);
-        patientInfo.setBirthDate("1997-10-19");
         patientInfoList.add(patientInfo);
 
         Map<String, Object> businessData = new HashMap<>();
         businessData.put("data", patientInfoList);
+        businessData.put("chargeType", "CHARGED");
+        System.out.println(JSON.toJSONString(businessData));
 
         // 基本属性访问
         String expression = "#data[data][0].patientId";

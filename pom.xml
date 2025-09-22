@@ -18,8 +18,8 @@
         <spring-cloud-config-client.version>2.2.5.RELEASE</spring-cloud-config-client.version>
         <tk.mybatis.start.version>2.1.5</tk.mybatis.start.version>
         <com.alibaba.fastjson2.version>2.0.32</com.alibaba.fastjson2.version>
-        <druid.version>1.2.18</druid.version> <!-- 升级 Druid 版本 -->
-        <sqlserver.version>12.4.2.jre8</sqlserver.version> <!-- 升级 SQL Server 驱动 -->
+        <druid.version>1.2.18</druid.version>
+        <sqlserver.version>12.4.2.jre8</sqlserver.version>
     </properties>
 
     <dependencies>
@@ -135,7 +135,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.24</version> <!-- 升级 lombok 版本 -->
+            <version>1.18.24</version>
         </dependency>
 
         <!-- SpEL -->
@@ -151,6 +151,7 @@
             <artifactId>springfox-swagger2</artifactId>
             <version>2.9.2</version>
         </dependency>
+
         <dependency>
             <groupId>io.springfox</groupId>
             <artifactId>springfox-swagger-ui</artifactId>
