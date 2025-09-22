@@ -87,13 +87,6 @@ public class WorkFlowEngineScheduler {
         return preFlowNodeResponse;
     }
 
-    private void postParamProcessor(String paramFilterExpr, Map<String, Object> businessData) {
-        if (StringUtils.isEmpty(paramFilterExpr)) {
-            return;
-        }
-        ExpressionMapperUtils.businessDataFilter(paramFilterExpr, businessData);
-    }
-
     @SuppressWarnings("unchecked")
     private List<Integer> determineNextNode(String scheduleExpr, Map<String, Object> preFlowNodeResponse) {
         if (StringUtils.isEmpty(scheduleExpr)) {
