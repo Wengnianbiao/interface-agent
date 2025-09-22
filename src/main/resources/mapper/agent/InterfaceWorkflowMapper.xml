@@ -17,9 +17,27 @@
 
         <result column="status" property="status" />
     </resultMap>
-    <insert id="createWorkflow">
-        insert into interface_workflow (flow_name, interface_uri, first_flow_nodes, status)
-        values(#{flowName}, #{interfaceUri}, #{firstFlowNodes, typeHandler=com.helianhealth.agent.config.ListIntegerTypeHandler}, #{status})
+
+    <insert id="createWorkflow"
+            parameterType="com.helianhealth.agent.model.domain.InterfaceWorkflowDO"
+            useGeneratedKeys="true"
+            keyProperty="flowId"
+            keyColumn="flow_id">
+        INSERT INTO interface_workflow (
+            flow_name,
+            interface_uri,
+            content_type,
+            content_meta_info,
+            first_flow_nodes,
+            status
+        ) VALUES (
+                     #{flowName},
+                     #{interfaceUri},
+                     #{contentType},
+                     #{contentMetaInfo},
+                     #{firstFlowNodes, typeHandler=com.helianhealth.agent.config.ListIntegerTypeHandler},
+                     #{status}
+                 )
     </insert>
 
     <select id="selectByInterfaceUri" resultMap="BaseResultMap">
