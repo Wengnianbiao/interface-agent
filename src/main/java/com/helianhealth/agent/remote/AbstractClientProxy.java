@@ -1,20 +1,15 @@
 package com.helianhealth.agent.remote;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONException;
-import com.alibaba.fastjson2.JSONObject;
-import com.helianhealth.agent.enums.NodeType;
 import com.helianhealth.agent.mapper.agent.NodeParamConfigMapper;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
 import com.helianhealth.agent.model.domain.NodeParamConfigDO;
 import com.helianhealth.agent.model.dto.ParamTreeNode;
+import com.helianhealth.agent.remote.helper.ResponseConvertHelper;
 import com.helianhealth.agent.remote.resolver.ValueResolveService;
-import com.helianhealth.agent.utils.ParamNodeUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -30,6 +25,7 @@ public abstract class AbstractClientProxy implements InterfaceClientProxy, Param
 
     private final NodeParamConfigMapper nodeMapper;
     private final ValueResolveService valueResolveService;
+    private final ResponseConvertHelper responseConvertHelper;
 
     @Override
     public Map<String, Object> remoteInvoke(InterfaceWorkflowNodeDO flowNode, Map<String, Object> businessData) {
@@ -75,53 +71,7 @@ public abstract class AbstractClientProxy implements InterfaceClientProxy, Param
 
         List<ParamTreeNode> rootNodes = buildParamTree(nodeConfigs, null, response, businessData);
 
-        return convertParamTreeToMap(flowNode, rootNodes);
-    }
-
-    private Map<String, Object> convertParamTreeToMap(InterfaceWorkflowNodeDO flowNode, List<ParamTreeNode> paramTree) {
-
-        // 获取节点的元信息
-        String metaInfo = flowNode.getMetaInfo();
-        if (StringUtils.isEmpty(metaInfo)) {
-            // 如果没有元信息，使用默认转换
-            return ParamNodeUtils.convertNodesToMap(paramTree);
-        }
-
-        try {
-            // 解析metaInfo为JSON对象
-            JSONObject metaJson = JSON.parseObject(metaInfo);
-            // 获取响应类型，默认为json
-            String responseType = metaJson.getString("responseType");
-            if (StringUtils.isEmpty(responseType)) {
-                responseType = "json";
-            }
-
-            // 根据响应类型进行不同处理
-            if ("xml".equalsIgnoreCase(responseType)) {
-                // XML类型处理：可能需要将参数树转换为XML格式的Map结构
-                return ParamNodeUtils.convertToXmlFormatMap(paramTree);
-            } else {
-                NodeType nodeType = flowNode.getNodeType();
-                switch (nodeType) {
-                    case DATABASE:
-                    case HTTP:
-                        // HTTP类型处理：可能需要将参数树转换为HTTP请求参数
-                        // 数据库类型处理：可能需要将参数树转换为数据库查询语句
-                        return ParamNodeUtils.convertNodesToMap(paramTree);
-                    case WEBSERVICE:
-                        // WebService类型处理：可能需要将参数树转换为WebService请求参数
-                        return ParamNodeUtils.convertToJsonFormatMap(paramTree);
-                    default:
-                        // 默认处理：将参数树转换为JSON格式的Map结构
-                        return ParamNodeUtils.convertNodesToMap(paramTree);
-                }
-            }
-        } catch (JSONException e) {
-            // 处理JSON解析异常
-            log.error("解析节点元信息失败，nodeId: {}, metaInfo: {}", flowNode.getNodeId(), metaInfo, e);
-            // 解析失败时使用默认转换
-            return ParamNodeUtils.convertNodesToMap(paramTree);
-        }
+        return responseConvertHelper.convertResponse(flowNode, rootNodes);
     }
 
     /**

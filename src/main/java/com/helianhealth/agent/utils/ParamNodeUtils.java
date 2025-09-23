@@ -25,7 +25,7 @@ public class ParamNodeUtils {
             String key = node.getParamKey();
             // 处理值：如果有子节点则递归转换，否则直接使用节点的value
             Object value = node.getChildren() != null && !node.getChildren().isEmpty()
-                    ? convertNodesToMap(node.getChildren())  // 递归处理子对象
+                    ? convertNodesToMap(node.getChildren())
                     : node.getParamValue();
 
             result.put(key, value);
