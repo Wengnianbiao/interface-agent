@@ -2,7 +2,7 @@ package com.helianhealth.agent.controller.api;
 
 import com.helianhealth.agent.common.ResultData;
 import com.helianhealth.agent.controller.request.JarvisRequest;
-import com.helianhealth.agent.service.impl.schedule.FlowNodeDispatcher;
+import com.helianhealth.agent.schedule.FlowNodeDispatcher;
 import com.helianhealth.agent.utils.ResponseModelUtils;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;

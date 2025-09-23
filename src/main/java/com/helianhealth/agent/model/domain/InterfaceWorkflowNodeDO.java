@@ -65,6 +65,14 @@ public class InterfaceWorkflowNodeDO {
     private String metaInfo;
 
     /**
+     * 参数拆分规则表达式
+     * 当前业务场景只根据列表拆分为单个对象或基础数据类型
+     * e.g. ids:["12","32"] -> {"id":"12","id":"32"}
+     */
+    @Column(name = "split_rule")
+    private String splitRule;
+
+    /**
      * 调度规则表达式
      */
     @Column(name = "schedule_expr")

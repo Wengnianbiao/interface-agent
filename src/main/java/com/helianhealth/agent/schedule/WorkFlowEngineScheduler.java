@@ -1,4 +1,4 @@
-package com.helianhealth.agent.service.impl.schedule;
+package com.helianhealth.agent.schedule;
 
 import com.helianhealth.agent.enums.ScheduleParamSourceType;
 import com.helianhealth.agent.exception.InstanceBusinessException;
@@ -38,8 +38,9 @@ public class WorkFlowEngineScheduler {
     public Map<String, Object> schedule(List<Integer> flowNodes, Map<String, Object> businessData) {
         Map<String, Object> flowNodeResponse;
         if (flowNodes != null && flowNodes.size() == 1) {
+            InterfaceWorkflowNodeDO flowNode = flowNodeService.selectByNodeId(flowNodes.get(0));
             // 单节点处理
-            flowNodeResponse = processSingleNode(flowNodes.get(0), businessData);
+            flowNodeResponse = processSingleNode(flowNode, businessData);
         } else if (flowNodes != null && flowNodes.size() > 1) {
             // 多个节点,则说明这是个并行业务,譬如申请单,节点工作完成后需要有个聚合操作
             flowNodeResponse = processParallelNode(flowNodes, businessData);
@@ -50,8 +51,7 @@ public class WorkFlowEngineScheduler {
         return flowNodeResponse;
     }
 
-    private Map<String, Object> processSingleNode(Integer nodeId, Map<String, Object> businessData) {
-        InterfaceWorkflowNodeDO flowNode = flowNodeService.selectByNodeId(nodeId);
+    private Map<String, Object> processSingleNode(InterfaceWorkflowNodeDO flowNode, Map<String, Object> businessData) {
         // 1、根据规则表达式对入参进行预处理
         Map<String, Object> businessDataAfterPost = businessDataPostProcessor.postParamProcessor(
                 flowNode.getParamFilterExpr(), businessData);
@@ -59,6 +59,7 @@ public class WorkFlowEngineScheduler {
             // 经过过滤后如果为Null就不进行处理
             return new HashMap<>();
         }
+        //  todo 单节点可能需要拆分为多节点调用,e.g.入参为列表但是接口只支持对象
 
         // 2、执行节点
         Map<String, Object> nodeResponse = flowNodeService.executeFlowNode(flowNode, businessDataAfterPost);
@@ -119,7 +120,8 @@ public class WorkFlowEngineScheduler {
         // 1. 收集所有并行节点的处理结果
         List<Map<String, Object>> nodeResultList = new ArrayList<>();
         nodeIds.forEach(nodeId -> {
-            Map<String, Object> nodeResult = processSingleNode(nodeId, businessData);
+            InterfaceWorkflowNodeDO flowNode = flowNodeService.selectByNodeId(nodeId);
+            Map<String, Object> nodeResult = processSingleNode(flowNode, businessData);
             if (nodeResult == null || nodeResult.isEmpty()) {
                 return;
             }

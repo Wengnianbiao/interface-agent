@@ -1,19 +1,16 @@
-package com.helianhealth.agent.service.impl.schedule;
+package com.helianhealth.agent.schedule;
 
 import com.helianhealth.agent.common.ResultData;
 import com.helianhealth.agent.controller.request.JarvisRequest;
-import com.helianhealth.agent.enums.WorkflowContentType;
 import com.helianhealth.agent.exception.InstanceBusinessException;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowDO;
 import com.helianhealth.agent.service.InterfaceWorkflowService;
 import com.helianhealth.agent.utils.JsonUtils;
 import com.helianhealth.agent.utils.ResponseModelUtils;
-import com.helianhealth.agent.utils.XmlUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -28,6 +25,7 @@ public class FlowNodeDispatcher {
 
     private final InterfaceWorkflowService workflowService;
     private final WorkFlowEngineScheduler workFlowEngineScheduler;
+    private final ContentParser contentParser;
 
     /**
      * 适配jarvis的参数解析调度
@@ -62,14 +60,14 @@ public class FlowNodeDispatcher {
             if (workflowOptional.isPresent()) {
                 InterfaceWorkflowDO workflow = workflowOptional.get();
                 // 2、参数预处理,根据入参格式转化
-                Map<String, Object> businessData = contentParser(workflow, request);
+                Map<String, Object> businessData = contentParser.parseRequest(workflow, request);
 
                 // 3、调度工作流统一入参格式为Map<String,Object>
                 Map<String, Object> scheduleRsp = workFlowEngineScheduler.schedule(workflow.getFirstFlowNodes(),
                         businessData);
 
                 // 4、根据工作流内容类型构建响应
-                return buildResponse(workflow, scheduleRsp);
+                return contentParser.responseBuilder(workflow, scheduleRsp);
             } else {
                 log.error(InstanceBusinessException.METHOD_NOT_SUPPORT.getMessage());
                 throw InstanceBusinessException.METHOD_NOT_SUPPORT.toException();
@@ -92,56 +90,4 @@ public class FlowNodeDispatcher {
         }
     }
 
-    /**
-     * 根据内容类型解析请求为Map结构
-     * @param workflow 工作流
-     * @param request 请求内容字符串
-     * @return 解析后的Map
-     */
-    private Map<String, Object> contentParser(InterfaceWorkflowDO workflow, String request) {
-        if (request == null || request.trim().isEmpty()) {
-            return new HashMap<>();
-        }
-
-        WorkflowContentType contentType = workflow.getContentType();
-        try {
-            if (WorkflowContentType.JSON.equals(contentType)) {
-                // 解析JSON为Map
-                return parseJsonToMap(request);
-            } else if (WorkflowContentType.XML.equals(contentType)) {
-                // 解析SOAP XML为Map
-                return parseSoapXmlToMap(request, workflow.getContentMetaInfo());
-            }
-        } catch (Exception e) {
-            log.error("解析请求内容失败，类型: {}, 错误: {}", contentType, e.getMessage(), e);
-        }
-
-        return new HashMap<>();
-    }
-
-    /**
-     * 解析JSON字符串为Map
-     */
-    private Map<String, Object> parseJsonToMap(String json) {
-        return JsonUtils.toMap(json);
-    }
-
-    /**
-     * 解析SOAP XML字符串为Map
-     * 处理SOAP信封，提取CDATA中的实际业务数据
-     */
-    private Map<String, Object> parseSoapXmlToMap(String xml, String metaInfo) {
-        return XmlUtils.parseRequestXml(xml, metaInfo);
-    }
-
-    private String buildResponse(InterfaceWorkflowDO workflow, Map<String, Object> scheduleRsp) {
-        WorkflowContentType contentType = workflow.getContentType();
-        if (WorkflowContentType.JSON.equals(contentType)) {
-            return JsonUtils.toJsonString(scheduleRsp);
-        } else if (WorkflowContentType.XML.equals(contentType)) {
-            return XmlUtils.buildResponseXml(scheduleRsp, workflow.getContentMetaInfo());
-        } else {
-            return null;
-        }
-    }
 }
