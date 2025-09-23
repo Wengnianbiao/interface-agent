@@ -1,4 +1,4 @@
-package com.helianhealth.agent.controller;
+package com.helianhealth.agent.controller.log;
 
 import com.helianhealth.agent.common.PageList;
 import com.helianhealth.agent.common.ResultData;
