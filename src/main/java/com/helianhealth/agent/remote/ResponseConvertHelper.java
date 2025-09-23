@@ -1,4 +1,4 @@
-package com.helianhealth.agent.remote.helper;
+package com.helianhealth.agent.remote;
 
 import com.helianhealth.agent.enums.NodeType;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;

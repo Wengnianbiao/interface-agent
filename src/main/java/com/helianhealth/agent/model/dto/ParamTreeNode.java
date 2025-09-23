@@ -29,11 +29,6 @@ public class ParamTreeNode {
     private ParamType paramType;
 
     /**
-     * 操作类型（用于数据库查询条件，如 =, !=, >, <, IN, LIKE 等）
-     */
-    private OperationType operationType;
-
-    /**
      * xml的属性节点
      */
     private List<ParamTreeNode> attributeNodes;

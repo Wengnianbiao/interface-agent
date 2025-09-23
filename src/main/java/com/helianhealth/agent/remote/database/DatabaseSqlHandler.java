@@ -1,7 +1,7 @@
 package com.helianhealth.agent.remote.database;
 
-import com.helianhealth.agent.enums.OperationType;
 import com.helianhealth.agent.enums.ParamType;
+import com.helianhealth.agent.exception.DatabaseRemoteBusinessException;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
 import com.helianhealth.agent.model.dto.ParamTreeNode;
 import com.helianhealth.agent.remote.ParamResolver;
@@ -9,6 +9,7 @@ import com.helianhealth.agent.utils.JsonUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -30,126 +31,111 @@ public class DatabaseSqlHandler implements ParamResolver {
 
     @Override
     public String resolveParamNodes(InterfaceWorkflowNodeDO flowNode, List<ParamTreeNode> params) {
-        // 数据库中的数据的处理
+
         Map<String, Object> metaInfo = JsonUtils.toMap(flowNode.getMetaInfo());
-        String tableName = (String) metaInfo.get("tableName");
+        String sqlTemplate = (String) metaInfo.get("sqlTemplate");
         String operation = (String) metaInfo.get("operation");
 
-        if ("INSERT".equalsIgnoreCase(operation)) {
-            return buildInsertSql(tableName, params.get(0));
-        } else {
-            // 默认处理SELECT操作
-            return buildSelectSql(tableName, params);
+        // 检查是否有SQL模板
+        if (!StringUtils.hasText(sqlTemplate)) {
+            throw DatabaseRemoteBusinessException.DATABASE_TEMPLATE_NOT_FOUND.toException();
+        }
+        if (!StringUtils.hasText(operation)) {
+            throw DatabaseRemoteBusinessException.DATABASE_OPERATION_NOT_FOUND.toException();
+        }
+
+        switch (operation.toUpperCase()) {
+            case "INSERT":
+                return buildInsertSql(sqlTemplate, params.get(0));
+            case "UPDATE":
+                return buildUpdateSql(sqlTemplate, params.get(0));
+            case "DELETE":
+                return buildDeleteSql(sqlTemplate, params);
+            case "SELECT":
+            default:
+                return buildSelectSql(sqlTemplate, params);
         }
     }
 
-    /**
-     * 构建INSERT SQL语句(支持对象和数组类型参数)
-     * 优化点：将多个INSERT合并为一个批量INSERT语句
-     */
-    private String buildInsertSql(String tableName, ParamTreeNode paramNode) {
-        // 收集所有要插入的记录
-        List<List<ParamTreeNode>> allRecords = new ArrayList<>();
+    private String buildUpdateSql(String tableName, ParamTreeNode paramTreeNode) {
+        return null;
+    }
 
-        // 如果参数节点是数组类型，收集数组中的每个元素
+    private String buildDeleteSql(String tableName, List<ParamTreeNode> params) {
+        return null;
+    }
+
+    /**
+     * 构建INSERT SQL语句(接口场景只存在对象和数组类型参数,单个数据的Insert不存在吧)
+     */
+    private String buildInsertSql(String sqlTemplate, ParamTreeNode paramNode) {
+        // 提取模板中的VALUES部分
+        int valuesStart = sqlTemplate.indexOf("VALUES") + "VALUES".length();
+        String valueTemplate = sqlTemplate.substring(valuesStart).trim();
+        String prefix = sqlTemplate.substring(0, valuesStart).trim();
+
+        StringBuilder valuesBuilder = new StringBuilder();
+        boolean hasRecords = false;
+        int recordCount = 0;
+
+        // 处理数组/纯数组类型
         if (paramNode.getParamType() == ParamType.ARRAY || paramNode.getParamType() == ParamType.PURE_ARRAY) {
             if (paramNode.getChildren() != null) {
                 for (ParamTreeNode childNode : paramNode.getChildren()) {
-                    // 只处理有效的对象类型子节点
-                    if (childNode.getParamType() == ParamType.OBJECT && childNode.getChildren() != null) {
-                        List<ParamTreeNode> validFields = childNode.getChildren().stream()
-                                .filter(node -> node.getParamValue() != null)
-                                .collect(Collectors.toList());
-                        if (!validFields.isEmpty()) {
-                            allRecords.add(validFields);
+                    // 只处理对象类型的子节点，且对象必须包含字段信息
+                    if (childNode.getParamType() == ParamType.OBJECT && childNode.getChildren() != null && !childNode.getChildren().isEmpty()) {
+                        hasRecords = true;
+                        // 替换当前记录的占位符
+                        String recordValues = valueTemplate;
+                        for (ParamTreeNode field : childNode.getChildren()) {
+                            String formattedValue = formatValue(field.getParamValue());
+                            recordValues = recordValues.replace("{" + field.getParamKey() + "}", formattedValue);
                         }
+                        // 添加分隔符
+                        if (recordCount > 0) {
+                            valuesBuilder.append(", ");
+                        }
+                        valuesBuilder.append(recordValues);
+                        recordCount++;
                     }
                 }
             }
-        } else if (paramNode.getParamType() == ParamType.OBJECT) {
-            // 对象类型直接添加为一条记录
-            if (paramNode.getChildren() != null) {
-                List<ParamTreeNode> validFields = paramNode.getChildren().stream()
-                        .filter(node -> node.getParamValue() != null)
-                        .collect(Collectors.toList());
-                if (!validFields.isEmpty()) {
-                    allRecords.add(validFields);
+        }
+        // 处理对象类型
+        else if (paramNode.getParamType() == ParamType.OBJECT) {
+            if (paramNode.getChildren() != null && !paramNode.getChildren().isEmpty()) {
+                hasRecords = true;
+                // 替换单个对象的占位符
+                String recordValues = valueTemplate;
+                for (ParamTreeNode field : paramNode.getChildren()) {
+                    String formattedValue = formatValue(field.getParamValue());
+                    recordValues = recordValues.replace("{" + field.getParamKey() + "}", formattedValue);
                 }
+                valuesBuilder.append(recordValues);
             }
         }
-
-        // 如果没有记录要插入，返回空字符串
-        if (allRecords.isEmpty()) {
-            return "";
+        // 不支持的类型
+        else {
+            throw new RuntimeException("不支持的参数类型：" + paramNode.getParamType());
         }
 
-        // 构建批量INSERT语句
-        return buildBatchInsertSql(tableName, allRecords);
+        // 没有记录时返回空字符串
+        return hasRecords ? prefix + " " + valuesBuilder.toString() : "";
     }
 
     /**
-     * 构建批量INSERT SQL语句
-     * 格式：INSERT INTO table (col1, col2, ...) VALUES (val1, val2, ...), (val1, val2, ...), ...;
+     * 根据值的类型格式化SQL中的值
      */
-    private String buildBatchInsertSql(String tableName, List<List<ParamTreeNode>> allRecords) {
-        // 所有记录必须有相同的字段，取第一条记录的字段作为基准
-        List<ParamTreeNode> firstRecord = allRecords.get(0);
-        List<String> fieldNames = firstRecord.stream()
-                .map(ParamTreeNode::getParamKey)
-                .collect(Collectors.toList());
-
-        StringBuilder sql = new StringBuilder("INSERT INTO ").append(tableName).append(" (");
-
-        // 拼接字段名
-        for (int i = 0; i < fieldNames.size(); i++) {
-            if (i > 0) {
-                sql.append(", ");
-            }
-            sql.append(fieldNames.get(i));
+    private String formatValue(Object value) {
+        if (value == null) {
+            return "NULL";
         }
-        sql.append(") VALUES ");
-
-        // 拼接所有记录的values部分
-        for (int i = 0; i < allRecords.size(); i++) {
-            List<ParamTreeNode> record = allRecords.get(i);
-
-            // 验证当前记录的字段与第一条记录是否一致
-            List<String> currentFieldNames = record.stream()
-                    .map(ParamTreeNode::getParamKey)
-                    .collect(Collectors.toList());
-            if (!currentFieldNames.equals(fieldNames)) {
-                log.warn("批量插入时发现字段不一致，跳过异常记录");
-                continue;
-            }
-
-            // 拼接一条记录的values
-            if (i > 0) {
-                sql.append(", ");
-            }
-            sql.append("(");
-
-            for (int j = 0; j < record.size(); j++) {
-                ParamTreeNode field = record.get(j);
-                Object fieldValue = field.getParamValue();
-
-                if (j > 0) {
-                    sql.append(", ");
-                }
-
-                // 处理不同类型的值
-                if (fieldValue instanceof String || fieldValue instanceof java.util.Date) {
-                    // 转义单引号，防止SQL注入和语法错误
-                    String escapedValue = String.valueOf(fieldValue).replace("'", "''");
-                    sql.append("'").append(escapedValue).append("'");
-                } else {
-                    sql.append(fieldValue);
-                }
-            }
-            sql.append(")");
+        if (value instanceof String || value instanceof Character) {
+            // 转义单引号，防止SQL注入
+            return "'" + value.toString().replace("'", "''") + "'";
         }
-
-        sql.append(";");
-        return sql.toString();
+        // 数字类型直接返回字符串表示
+        return value.toString();
     }
 
     /**
@@ -203,69 +189,7 @@ public class DatabaseSqlHandler implements ParamResolver {
      * 构建SQL查询语句
      */
     private String buildSelectSql(String tableName, List<ParamTreeNode> params) {
-        StringBuilder sql = new StringBuilder("SELECT * FROM ").append(tableName);
-
-        // 过滤出有值且有操作类型的参数节点
-        List<ParamTreeNode> validParams = params.stream()
-                .filter(node -> node.getParamValue() != null)
-                .filter(node -> node.getOperationType() != null)
-                .collect(Collectors.toList());
-
-        if (!validParams.isEmpty()) {
-            sql.append(" WHERE ");
-
-            for (ParamTreeNode param : validParams) {
-                String paramKey = param.getParamKey();
-                Object paramValue = param.getParamValue();
-                OperationType operationType = param.getOperationType();
-
-                // 根据不同的操作类型添加相应的条件表达式和值
-                switch (operationType) {
-                    case LIKE:
-                        // LIKE操作需要处理通配符，转义单引号
-                        String likeValue = String.valueOf(paramValue).replace("'", "''");
-                        sql.append(paramKey).append(" LIKE '").append(likeValue).append("' AND ");
-                        break;
-                    case IN:
-                    case NOT_IN:
-                        // IN和NOT IN需要处理值列表
-                        if (paramValue instanceof List) {
-                            List<?> valueList = (List<?>) paramValue;
-                            sql.append(paramKey).append(" ").append(operationType.getOperator()).append(" (");
-                            for (int i = 0; i < valueList.size(); i++) {
-                                if (i > 0) {
-                                    sql.append(",");
-                                }
-                                // 转义单引号
-                                String inValue = String.valueOf(valueList.get(i)).replace("'", "''");
-                                sql.append("'").append(inValue).append("'");
-                            }
-                            sql.append(") AND ");
-                        } else {
-                            // 转义单引号
-                            String inValue = String.valueOf(paramValue).replace("'", "''");
-                            sql.append(paramKey).append(" ").append(operationType.getOperator()).append(" ('")
-                                    .append(inValue).append("') AND ");
-                        }
-                        break;
-                    case IS_NULL:
-                    case IS_NOT_NULL:
-                        // IS NULL和IS NOT NULL不需要参数值
-                        sql.append(paramKey).append(" ").append(operationType.getOperator()).append(" AND ");
-                        break;
-                    default:
-                        // 其他操作符使用标准格式，转义单引号
-                        String paramVal = String.valueOf(paramValue).replace("'", "''");
-                        sql.append(paramKey).append(" ").append(operationType.getOperator()).append(" '")
-                                .append(paramVal).append("' AND ");
-                }
-            }
-
-            // 移除最后的 " AND "
-            sql.delete(sql.length() - 5, sql.length());
-        }
-
-        return sql.toString();
+        return null;
     }
 
     public Map<String, Object> invokeSqlAndConvertResult(InterfaceWorkflowNodeDO flowNode, String sql) {

@@ -78,9 +78,7 @@ CREATE TABLE node_param_config
     param_desc VARCHAR(100) NULL,
 
     -- 参数处理类型：前置PRE_PROCESS 或 后置POST_PROCESS
-    process_type VARCHAR(20) NULL ,
-    -- 操作类型，只针对数据库场景
-    operation_type VARCHAR(20) NULL
+    process_type VARCHAR(20) NULL
 );
 
 CREATE TABLE interface_invoke_log (

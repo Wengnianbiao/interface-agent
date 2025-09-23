@@ -3,7 +3,6 @@ package com.helianhealth.agent.remote;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
 import com.helianhealth.agent.model.domain.NodeParamConfigDO;
 import com.helianhealth.agent.model.dto.ParamTreeNode;
-import com.helianhealth.agent.remote.helper.ResponseConvertHelper;
 import com.helianhealth.agent.remote.resolver.ValueResolveService;
 import com.helianhealth.agent.service.NodeParamConfigService;
 import lombok.extern.slf4j.Slf4j;
@@ -125,7 +124,6 @@ public abstract class AbstractClientProxy implements InterfaceClientProxy, Param
         ParamTreeNode node = ParamTreeNode.builder()
                 .paramKey(config.getTargetParamKey())
                 .paramType(config.getTargetParamType())
-                .operationType(config.getOperationType())
                 .build();
 
         // 不同的节点类型处理方式不同

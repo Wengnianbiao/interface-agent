@@ -1,12 +1,15 @@
 package com.helianhealth.agent.remote.database;
 
+import com.alibaba.fastjson2.JSONArray;
 import com.helianhealth.agent.enums.MappingSource;
+import com.helianhealth.agent.enums.MappingType;
 import com.helianhealth.agent.enums.ParamType;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
 import com.helianhealth.agent.model.domain.NodeParamConfigDO;
 import com.helianhealth.agent.model.dto.ParamTreeNode;
 import com.helianhealth.agent.remote.AbstractClientProxy;
 import com.helianhealth.agent.utils.JsonUtils;
+import com.helianhealth.agent.utils.ParamNodeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -29,9 +32,9 @@ public class DatabaseClientProxy extends AbstractClientProxy {
     @Override
     public Map<String, Object> doInvoke(InterfaceWorkflowNodeDO flowNode, List<ParamTreeNode> params) {
         try {
-            // 构建SQL查询语句
+            // 构建SQL语句
             String sql = databaseSqlHandler.resolveParamNodes(flowNode, params);
-            // 执行SQL查询并转化为Map
+            // 执行SQL并转化为Map
             return databaseSqlHandler.invokeSqlAndConvertResult(flowNode, sql);
         } catch (Exception e) {
             log.error("数据库调用失败", e);
@@ -95,7 +98,7 @@ public class DatabaseClientProxy extends AbstractClientProxy {
                 getSourceValue(config.getSourceParamKey(), businessData);
 
         if (config.getSourceParamType() == ParamType.OBJECT && sourceValue != null) {
-            // 情况1: 源参数是Object，包装成大小为1的数组
+            // 源参数是Object，包装成大小为1的数组
             List<ParamTreeNode> arrayChildren = buildParamTree(allNodes,
                     config.getConfigId(),
                     JsonUtils.toMap(sourceValue),
@@ -123,6 +126,7 @@ public class DatabaseClientProxy extends AbstractClientProxy {
 
             node.setChildren(allArrayChildren);
         } else {
+            // 其他情况创建空数组
             node.setChildren(new ArrayList<>());
         }
     }
