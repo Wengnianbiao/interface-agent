@@ -3,13 +3,12 @@ package com.helianhealth.agent.remote;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONException;
 import com.alibaba.fastjson2.JSONObject;
-import com.helianhealth.agent.enums.MappingType;
 import com.helianhealth.agent.enums.NodeType;
 import com.helianhealth.agent.mapper.agent.NodeParamConfigMapper;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
 import com.helianhealth.agent.model.domain.NodeParamConfigDO;
 import com.helianhealth.agent.model.dto.ParamTreeNode;
-import com.helianhealth.agent.utils.ExpressionMapperUtils;
+import com.helianhealth.agent.remote.resolver.ValueResolveService;
 import com.helianhealth.agent.utils.ParamNodeUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +29,7 @@ import java.util.stream.Collectors;
 public abstract class AbstractClientProxy implements InterfaceClientProxy, ParamNodeHandler {
 
     private final NodeParamConfigMapper nodeMapper;
+    private final ValueResolveService valueResolveService;
 
     @Override
     public Map<String, Object> remoteInvoke(InterfaceWorkflowNodeDO flowNode, Map<String, Object> businessData) {
@@ -187,42 +187,9 @@ public abstract class AbstractClientProxy implements InterfaceClientProxy, Param
                 break;
             default:
                 // 基本类型：从业务数据中取值（根据mappingRule映射）
-                node.setParamValue(parseValueFromBusinessData(config, businessData, sourceBusinessData));
+                node.setParamValue(valueResolveService.resolveValue(config, businessData, sourceBusinessData));
         }
 
         return node;
-    }
-
-    public Object parseValueFromBusinessData(NodeParamConfigDO config, Map<String, Object> businessData, Map<String, Object> sourceBusinessData) {
-        if (config == null || businessData == null) {
-            return null;
-        }
-
-        Object targetValue = null;
-        MappingType mappingType = config.getMappingType();
-        String mappingRule = config.getMappingRule();
-
-        switch (mappingType) {
-            case CONSTANT:
-                targetValue = mappingRule;
-                break;
-            case NAME:
-                // 如果是名称的映射，值的话就直接取即可
-                targetValue = businessData.get(config.getSourceParamKey());
-                break;
-            case EXPRESSION:
-                // 使用SpEL表达式解析
-                targetValue = ExpressionMapperUtils.parser(mappingRule,
-                        config.getSourceParamKey() == null ? businessData : businessData.get(config.getSourceParamKey()),
-                        sourceBusinessData);
-                break;
-            case BEAN_EXPRESSION:
-                targetValue = ExpressionMapperUtils.parserWithBeanAccess(mappingRule,
-                        config.getSourceParamKey() == null ? businessData : businessData.get(config.getSourceParamKey()),
-                        sourceBusinessData);
-                break;
-        }
-
-        return targetValue;
     }
 }

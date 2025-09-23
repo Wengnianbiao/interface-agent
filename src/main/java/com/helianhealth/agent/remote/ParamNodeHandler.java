@@ -22,9 +22,4 @@ public interface ParamNodeHandler {
                               Map<String, Object> businessData,
                               Map<String, Object> rootBusinessData,
                               ParamTreeNode node);
-
-
-    Object parseValueFromBusinessData(NodeParamConfigDO config,
-                                                Map<String, Object> businessData,
-                                                Map<String, Object> rootBusinessData);
 }
