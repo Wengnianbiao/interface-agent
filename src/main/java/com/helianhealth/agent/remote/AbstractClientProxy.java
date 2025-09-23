@@ -217,30 +217,12 @@ public abstract class AbstractClientProxy implements InterfaceClientProxy, Param
                         sourceBusinessData);
                 break;
             case BEAN_EXPRESSION:
-                targetValue = parseExpressionWithBeanAccess(mappingRule,
+                targetValue = ExpressionMapperUtils.parserWithBeanAccess(mappingRule,
                         config.getSourceParamKey() == null ? businessData : businessData.get(config.getSourceParamKey()),
                         sourceBusinessData);
                 break;
         }
 
         return targetValue;
-    }
-
-    /**
-     * 使用SpEL表达式解析并执行Spring Bean方法调用
-     * 例如：@interfaceFlowNodeMapper.selectByNodeId(#nodeId)
-     * @param expression SpEL表达式
-     * @param businessData 业务数据
-     * @param sourceBusinessData 源业务数据
-     * @return 表达式执行结果
-     */
-    public Object parseExpressionWithBeanAccess(String expression, Object businessData, Map<String, Object> sourceBusinessData) {
-        try {
-            // 使用ExpressionMapperUtils的增强版本，支持Bean访问
-            return ExpressionMapperUtils.parserWithBeanAccess(expression, businessData, sourceBusinessData);
-        } catch (Exception e) {
-            log.error("SpEL表达式执行失败，表达式: {}", expression, e);
-            return null;
-        }
     }
 }
