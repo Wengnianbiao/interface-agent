@@ -21,4 +21,8 @@ public interface NodeParamConfigService {
     void deleteById(Integer configId);
 
     void importNodeParamConfig(Integer nodeId, MultipartFile file);
+
+    List<NodeParamConfigDO> selectPreProcessConfigByNodeId(Integer nodeId);
+
+    List<NodeParamConfigDO> selectPostProcessConfigByNodeId(Integer nodeId);
 }

@@ -172,6 +172,16 @@ public class NodeParamConfigServiceImpl implements NodeParamConfigService {
         }
     }
 
+    @Override
+    public List<NodeParamConfigDO> selectPreProcessConfigByNodeId(Integer nodeId) {
+        return nodeParamConfigMapper.selectPreProcessConfigByNodeId(nodeId);
+    }
+
+    @Override
+    public List<NodeParamConfigDO> selectPostProcessConfigByNodeId(Integer nodeId) {
+        return nodeParamConfigMapper.selectPostProcessConfigByNodeId(nodeId);
+    }
+
     /**
      * 递归处理参数配置及其子参数
      * @param paramConfigDTO 导出的参数配置DTO

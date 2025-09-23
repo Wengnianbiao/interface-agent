@@ -24,8 +24,7 @@ public class HttpClientProxy extends AbstractClientProxy {
 
     private final HttpRequestHandler httpRequestHandler;
 
-    public HttpClientProxy(HttpRequestHandler httpRequestHandler, NodeParamConfigMapper nodeMapper) {
-        super(nodeMapper);
+    public HttpClientProxy(HttpRequestHandler httpRequestHandler) {
         this.httpRequestHandler = httpRequestHandler;
     }
 

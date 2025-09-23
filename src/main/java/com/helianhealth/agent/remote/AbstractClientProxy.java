@@ -1,14 +1,14 @@
 package com.helianhealth.agent.remote;
 
-import com.helianhealth.agent.mapper.agent.NodeParamConfigMapper;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
 import com.helianhealth.agent.model.domain.NodeParamConfigDO;
 import com.helianhealth.agent.model.dto.ParamTreeNode;
 import com.helianhealth.agent.remote.helper.ResponseConvertHelper;
 import com.helianhealth.agent.remote.resolver.ValueResolveService;
-import lombok.AllArgsConstructor;
+import com.helianhealth.agent.service.NodeParamConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.AopContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
@@ -20,12 +20,16 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
-@AllArgsConstructor
 public abstract class AbstractClientProxy implements InterfaceClientProxy, ParamNodeHandler {
 
-    private final NodeParamConfigMapper nodeMapper;
-    private final ValueResolveService valueResolveService;
-    private final ResponseConvertHelper responseConvertHelper;
+    @Autowired
+    private NodeParamConfigService nodeParamConfigService;
+
+    @Autowired
+    private ValueResolveService valueResolveService;
+
+    @Autowired
+    private ResponseConvertHelper responseConvertHelper;
 
     @Override
     public Map<String, Object> remoteInvoke(InterfaceWorkflowNodeDO flowNode, Map<String, Object> businessData) {
@@ -49,7 +53,7 @@ public abstract class AbstractClientProxy implements InterfaceClientProxy, Param
      */
     protected List<ParamTreeNode> preProcess(InterfaceWorkflowNodeDO flowNode, Map<String, Object> businessData) {
         // 获取的是前置参数配置
-        List<NodeParamConfigDO> nodeConfigs = nodeMapper.selectPreProcessConfigByNodeId(flowNode.getNodeId());
+        List<NodeParamConfigDO> nodeConfigs = nodeParamConfigService.selectPreProcessConfigByNodeId(flowNode.getNodeId());
         if (CollectionUtils.isEmpty(nodeConfigs)) {
             return new ArrayList<>();
         }
@@ -64,7 +68,7 @@ public abstract class AbstractClientProxy implements InterfaceClientProxy, Param
      * @return 处理后的结果
      */
     public Map<String, Object> postProcess(InterfaceWorkflowNodeDO flowNode, Map<String, Object> response, Map<String, Object> businessData) {
-        List<NodeParamConfigDO> nodeConfigs = nodeMapper.selectPostProcessConfigByNodeId(flowNode.getNodeId());
+        List<NodeParamConfigDO> nodeConfigs = nodeParamConfigService.selectPostProcessConfigByNodeId(flowNode.getNodeId());
         if (CollectionUtils.isEmpty(nodeConfigs)) {
             return new HashMap<>();
         }

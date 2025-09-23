@@ -24,8 +24,7 @@ public class WebServiceClientProxy extends AbstractClientProxy {
 
     private final SoapRequestHandler soapRequestHandler;
 
-    public WebServiceClientProxy(NodeParamConfigMapper nodeMapper, SoapRequestHandler soapRequestHandler) {
-        super(nodeMapper);
+    public WebServiceClientProxy(SoapRequestHandler soapRequestHandler) {
         this.soapRequestHandler = soapRequestHandler;
     }
 

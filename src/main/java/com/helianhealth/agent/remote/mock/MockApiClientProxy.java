@@ -14,8 +14,7 @@ import java.util.Map;
 @Component
 public class MockApiClientProxy extends AbstractClientProxy {
 
-    public MockApiClientProxy(NodeParamConfigMapper nodeMapper) {
-        super(nodeMapper);
+    public MockApiClientProxy() {
     }
 
     @Override

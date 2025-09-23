@@ -1,6 +1,5 @@
 package com.helianhealth.agent.remote;
 
-import com.helianhealth.agent.mapper.agent.NodeParamConfigMapper;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
 import com.helianhealth.agent.model.domain.NodeParamConfigDO;
 import com.helianhealth.agent.model.dto.ParamTreeNode;
@@ -12,10 +11,6 @@ import java.util.Map;
 
 @Component
 public class DefaultApiClientProxy extends AbstractClientProxy {
-
-    public DefaultApiClientProxy(NodeParamConfigMapper nodeMapper) {
-        super(nodeMapper);
-    }
 
     @Override
     public Map<String, Object> doInvoke(InterfaceWorkflowNodeDO flowNode, List<ParamTreeNode> params) {

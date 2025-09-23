@@ -2,7 +2,6 @@ package com.helianhealth.agent.remote.database;
 
 import com.helianhealth.agent.enums.MappingSource;
 import com.helianhealth.agent.enums.ParamType;
-import com.helianhealth.agent.mapper.agent.NodeParamConfigMapper;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
 import com.helianhealth.agent.model.domain.NodeParamConfigDO;
 import com.helianhealth.agent.model.dto.ParamTreeNode;
@@ -21,20 +20,19 @@ import java.util.Map;
 @Slf4j
 public class DatabaseClientProxy extends AbstractClientProxy {
 
-    private final DatabaseSqlHandler sqlHandler;
+    private final DatabaseSqlHandler databaseSqlHandler;
 
-    public DatabaseClientProxy(NodeParamConfigMapper nodeMapper, DatabaseSqlHandler sqlHandler) {
-        super(nodeMapper);
-        this.sqlHandler = sqlHandler;
+    public DatabaseClientProxy(DatabaseSqlHandler databaseSqlHandler) {
+        this.databaseSqlHandler = databaseSqlHandler;
     }
 
     @Override
     public Map<String, Object> doInvoke(InterfaceWorkflowNodeDO flowNode, List<ParamTreeNode> params) {
         try {
             // 构建SQL查询语句
-            String sql = sqlHandler.resolveParamNodes(flowNode, params);
+            String sql = databaseSqlHandler.resolveParamNodes(flowNode, params);
             // 执行SQL查询并转化为Map
-            return sqlHandler.invokeSqlAndConvertResult(flowNode, sql);
+            return databaseSqlHandler.invokeSqlAndConvertResult(flowNode, sql);
         } catch (Exception e) {
             log.error("数据库调用失败", e);
             throw new RuntimeException("数据库调用失败: " + e.getMessage(), e);
