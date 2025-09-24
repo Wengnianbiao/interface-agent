@@ -21,8 +21,8 @@ public class ResponseConvertHelper {
         // 获取节点的元信息
         String metaInfo = flowNode.getMetaInfo();
         if (StringUtils.isEmpty(metaInfo)) {
-            // 如果没有元信息，使用默认转换
-            return ParamNodeUtils.convertNodesToMap(paramTree);
+            // 如果没有元信息默认使用JSON
+            return convertToJsonFormatMap(flowNode, paramTree);
         }
 
         try {
@@ -37,15 +37,21 @@ public class ResponseConvertHelper {
             if ("xml".equalsIgnoreCase(responseType)) {
                 return ParamNodeUtils.convertToXmlFormatMap(paramTree);
             } else {
-                NodeType nodeType = flowNode.getNodeType();
-                // 如果原接口是WebService，返回是json的就需要特殊处理
-                if (Objects.requireNonNull(nodeType) == NodeType.WEBSERVICE) {
-                    return ParamNodeUtils.convertToJsonFormatMap(paramTree);
-                }
-                return ParamNodeUtils.convertNodesToMap(paramTree);
+                return convertToJsonFormatMap(flowNode, paramTree);
             }
         } catch (Exception e) {
             log.error("解析节点元信息失败，nodeId: {}, metaInfo: {}", flowNode.getNodeId(), metaInfo, e);
+            return ParamNodeUtils.convertNodesToMap(paramTree);
+        }
+    }
+
+    private Map<String, Object> convertToJsonFormatMap(InterfaceWorkflowNodeDO flowNode, List<ParamTreeNode> paramTree) {
+        NodeType nodeType = flowNode.getNodeType();
+        if (Objects.requireNonNull(nodeType) == NodeType.DATABASE) {
+            return ParamNodeUtils.convertToJsonFormatMap(paramTree);
+        } else if (nodeType == NodeType.WEBSERVICE) {
+            return ParamNodeUtils.convertToJsonFormatMap(paramTree);
+        } else {
             return ParamNodeUtils.convertNodesToMap(paramTree);
         }
     }

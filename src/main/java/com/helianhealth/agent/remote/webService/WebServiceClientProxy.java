@@ -1,14 +1,12 @@
 package com.helianhealth.agent.remote.webService;
 
-import com.alibaba.fastjson2.JSONArray;
+import com.helianhealth.agent.enums.MappingSource;
 import com.helianhealth.agent.enums.ParamType;
-import com.helianhealth.agent.mapper.agent.NodeParamConfigMapper;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
 import com.helianhealth.agent.model.domain.NodeParamConfigDO;
 import com.helianhealth.agent.model.dto.ParamTreeNode;
 import com.helianhealth.agent.remote.AbstractClientProxy;
 import com.helianhealth.agent.utils.JsonUtils;
-import com.helianhealth.agent.utils.ParamNodeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -94,8 +92,10 @@ public class WebServiceClientProxy extends AbstractClientProxy {
                                       Map<String, Object> businessData,
                                       Map<String, Object> rootBusinessData,
                                       ParamTreeNode node) {
-        String sourceParamKey = config.getSourceParamKey();
-        Object sourceValue = getSourceValue(sourceParamKey, businessData);
+        // 根据映射源进入迭代
+        Object sourceValue = config.getMappingSource() == MappingSource.INPUT ?
+                getSourceValue(config.getSourceParamKey(), rootBusinessData) :
+                getSourceValue(config.getSourceParamKey(), businessData);
 
         if (config.getSourceParamType() == ParamType.OBJECT && sourceValue != null) {
             // 源参数是Object，包装成大小为1的数组
