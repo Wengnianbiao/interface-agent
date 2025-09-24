@@ -809,4 +809,12 @@ public class ExpressionMapperUtilsTest {
         }
     }
 
+    @Test
+    public void testTimeFormatting() {
+        String expression = "T(java.time.LocalDateTime).parse('20250807110054', T(java.time.format.DateTimeFormatter).ofPattern('yyyyMMddHHmmss')).format(T(java.time.format.DateTimeFormatter).ofPattern('yyyy-MM-dd HH:mm:ss'))";
+
+        Object result = ExpressionMapperUtils.parser(expression, null, null);
+        System.out.println( result);
+    }
+
 }
