@@ -91,6 +91,14 @@ public class DatabaseClientProxy extends AbstractClientProxy {
         doProcessArrayNodeType(config, allNodes, businessData, rootBusinessData, node);
     }
 
+    /**
+     * 数组的情况在构建的时候统一使用一个虚拟节点来封装对象
+     * @param config 节点参数配置
+     * @param allNodes 所有节点参数配置
+     * @param businessData 业务数据
+     * @param rootBusinessData 根业务数据
+     * @param node 当前节点
+     */
     private void doProcessArrayNodeType(NodeParamConfigDO config, List<NodeParamConfigDO> allNodes, Map<String, Object> businessData, Map<String, Object> rootBusinessData, ParamTreeNode node) {
         // 根据映射源进入迭代
         Object sourceValue = config.getMappingSource() == MappingSource.INPUT ?
@@ -106,25 +114,30 @@ public class DatabaseClientProxy extends AbstractClientProxy {
             node.setChildren(arrayChildren);
         } else if (config.getSourceParamType() == ParamType.ARRAY && sourceValue != null) {
             // 目标参数是数组,原参数可能是数组也可能是单个对象(因为xml解析的时候还是按照Map解析)
-            List<ParamTreeNode> allArrayChildren = new ArrayList<>();
-            if (sourceValue instanceof List) {
-                List<?> sourceList = (List<?>) sourceValue;
-                for (Object item : sourceList) {
+            // 必须加上一个虚拟节点来封装对象
+            if (config.getMappingType().equals(MappingType.DIRECT)) {
+                node.setParamValue(sourceValue);
+            } else {
+                List<ParamTreeNode> allArrayChildren = new ArrayList<>();
+                if (sourceValue instanceof List) {
+                    List<?> sourceList = (List<?>) sourceValue;
+                    for (Object item : sourceList) {
+                        List<ParamTreeNode> arrayChildren = buildParamTree(allNodes,
+                                config.getConfigId(),
+                                JsonUtils.toMap(item),
+                                rootBusinessData);
+                        allArrayChildren.addAll(arrayChildren);
+                    }
+                } else if (sourceValue instanceof Map) {
                     List<ParamTreeNode> arrayChildren = buildParamTree(allNodes,
                             config.getConfigId(),
-                            JsonUtils.toMap(item),
+                            JsonUtils.toMap(sourceValue),
                             rootBusinessData);
                     allArrayChildren.addAll(arrayChildren);
                 }
-            } else if (sourceValue instanceof Map) {
-                List<ParamTreeNode> arrayChildren = buildParamTree(allNodes,
-                        config.getConfigId(),
-                        JsonUtils.toMap(sourceValue),
-                        rootBusinessData);
-                allArrayChildren.addAll(arrayChildren);
-            }
 
-            node.setChildren(allArrayChildren);
+                node.setChildren(allArrayChildren);
+            }
         } else {
             // 其他情况创建空数组
             node.setChildren(new ArrayList<>());

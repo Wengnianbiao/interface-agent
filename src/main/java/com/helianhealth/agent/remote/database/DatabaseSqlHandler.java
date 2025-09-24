@@ -61,18 +61,47 @@ public class DatabaseSqlHandler implements ParamResolver {
         return null;
     }
 
-    private String buildDeleteSql(String tableName, List<ParamTreeNode> params) {
-        return null;
+    private String buildDeleteSql(String sqlTemplate, List<ParamTreeNode> params) {
+        String finalSql = sqlTemplate;
+
+        // 遍历所有参数节点
+        for (ParamTreeNode param : params) {
+            // 只处理有参数值的节点
+            if (param.getParamValue() != null) {
+                String formattedValue = formatValue(param.getParamValue());
+                finalSql = finalSql.replace("{" + param.getParamKey() + "}", formattedValue);
+            }
+        }
+
+        // 检查是否还有未替换的占位符
+        if (finalSql.contains("{") && finalSql.contains("}")) {
+            throw DatabaseRemoteBusinessException.DATABASE_PLACE_HOLDER_ERROR.toException();
+        }
+        return finalSql;
     }
 
     /**
      * 构建INSERT SQL语句(接口场景只存在对象和数组类型参数,单个数据的Insert不存在吧)
      */
     private String buildInsertSql(String sqlTemplate, ParamTreeNode paramNode) {
-        // 提取模板中的VALUES部分
-        int valuesStart = sqlTemplate.indexOf("VALUES") + "VALUES".length();
-        String valueTemplate = sqlTemplate.substring(valuesStart).trim();
-        String prefix = sqlTemplate.substring(0, valuesStart).trim();
+        // 检查是否包含ON DUPLICATE KEY UPDATE部分
+        int onUpdateIndex = sqlTemplate.toUpperCase().indexOf("ON DUPLICATE KEY UPDATE");
+        String valuesPart;
+        String updatePart = "";
+
+        if (onUpdateIndex != -1) {
+            // 分离VALUES部分和ON DUPLICATE KEY UPDATE部分
+            valuesPart = sqlTemplate.substring(0, onUpdateIndex).trim();
+            updatePart = sqlTemplate.substring(onUpdateIndex);
+        } else {
+            // 没有ON DUPLICATE KEY UPDATE部分，直接使用整个模板
+            valuesPart = sqlTemplate;
+        }
+
+        // 提取VALUES部分中的模板
+        int valuesStart = valuesPart.indexOf("VALUES") + "VALUES".length();
+        String valueTemplate = valuesPart.substring(valuesStart).trim();
+        String prefix = valuesPart.substring(0, valuesStart).trim();
 
         StringBuilder valuesBuilder = new StringBuilder();
         boolean hasRecords = false;
@@ -100,9 +129,7 @@ public class DatabaseSqlHandler implements ParamResolver {
                     }
                 }
             }
-        }
-        // 处理对象类型
-        else if (paramNode.getParamType() == ParamType.OBJECT) {
+        } else if (paramNode.getParamType() == ParamType.OBJECT) {
             if (paramNode.getChildren() != null && !paramNode.getChildren().isEmpty()) {
                 hasRecords = true;
                 // 替换单个对象的占位符
@@ -120,7 +147,45 @@ public class DatabaseSqlHandler implements ParamResolver {
         }
 
         // 没有记录时返回空字符串
-        return hasRecords ? prefix + " " + valuesBuilder.toString() : "";
+        String result = hasRecords ? prefix + " " + valuesBuilder : "";
+
+        // 如果存在ON DUPLICATE KEY UPDATE部分，直接附加到结果后面
+        if (!updatePart.isEmpty()) {
+            result += " " + updatePart;
+        }
+
+        // 检查是否还有未替换的占位符
+        if (result.contains("{") && result.contains("}")) {
+            throw DatabaseRemoteBusinessException.DATABASE_PLACE_HOLDER_ERROR.toException();
+        }
+
+        return result;
+    }
+
+    /**
+     * 构建SQL查询语句
+     */
+    private String buildSelectSql(String sqlTemplate, List<ParamTreeNode> params) {
+        String finalSql = sqlTemplate;
+
+        for (ParamTreeNode param : params) {
+            String formattedValue;
+            // 处理数组类型参数，用于IN语句
+            if (param.getParamType() == ParamType.ARRAY || param.getParamType() == ParamType.PURE_ARRAY) {
+                formattedValue = formatArrayValue(param.getParamValue());
+            } else {
+                // 处理普通类型参数
+                formattedValue = formatValue(param.getParamValue());
+            }
+            finalSql = finalSql.replace("{" + param.getParamKey() + "}", formattedValue);
+        }
+
+        // 检查是否还有未替换的占位符
+        if (finalSql.contains("{") && finalSql.contains("}")) {
+            throw DatabaseRemoteBusinessException.DATABASE_PLACE_HOLDER_ERROR.toException();
+        }
+
+        return finalSql;
     }
 
     /**
@@ -139,57 +204,22 @@ public class DatabaseSqlHandler implements ParamResolver {
     }
 
     /**
-     * 构建单条INSERT SQL语句 (用于兼容单个对象插入的情况)
+     * 数组格式处理,只会在in语句中出现
+     * 将数组格式 ["117","102","94","87"] 转换为 SQL 的 ('117','102','94','87') 格式
      */
-    private String buildSingleInsertSql(String tableName, ParamTreeNode paramNode) {
-        StringBuilder sql = new StringBuilder("INSERT INTO ").append(tableName);
-
-        // 对于对象类型，从children中获取字段信息
-        if (paramNode.getParamType() == ParamType.OBJECT && paramNode.getChildren() != null) {
-            List<ParamTreeNode> fields = paramNode.getChildren();
-            List<ParamTreeNode> validFields = fields.stream()
-                    .filter(node -> node.getParamValue() != null)
-                    .collect(Collectors.toList());
-
-            if (!validFields.isEmpty()) {
-                sql.append(" (");
-                StringBuilder valuesPart = new StringBuilder(" VALUES (");
-
-                for (int i = 0; i < validFields.size(); i++) {
-                    ParamTreeNode field = validFields.get(i);
-                    String fieldKey = field.getParamKey();
-                    Object fieldValue = field.getParamValue();
-
-                    if (i > 0) {
-                        sql.append(", ");
-                        valuesPart.append(", ");
-                    }
-
-                    sql.append(fieldKey);
-                    // 处理不同类型的值，转义单引号
-                    if (fieldValue instanceof String || fieldValue instanceof java.util.Date) {
-                        String escapedValue = String.valueOf(fieldValue).replace("'", "''");
-                        valuesPart.append("'").append(escapedValue).append("'");
-                    } else {
-                        valuesPart.append(fieldValue);
-                    }
-                }
-
-                sql.append(")");
-                valuesPart.append(")");
-                sql.append(valuesPart);
-            }
+    private String formatArrayValue(Object value) {
+        if (value == null) {
+            return "NULL";
         }
 
-        sql.append(";");
-        return sql.toString();
-    }
+        // 直接将字符串形式的数组转换为SQL格式
+        String stringValue = value.toString();
 
-    /**
-     * 构建SQL查询语句
-     */
-    private String buildSelectSql(String tableName, List<ParamTreeNode> params) {
-        return null;
+        // 移除方括号并添加圆括号，将双引号转换为单引号
+        return stringValue
+                .replace("[", "(")
+                .replace("]", ")")
+                .replace("\"", "'");
     }
 
     public Map<String, Object> invokeSqlAndConvertResult(InterfaceWorkflowNodeDO flowNode, String sql) {

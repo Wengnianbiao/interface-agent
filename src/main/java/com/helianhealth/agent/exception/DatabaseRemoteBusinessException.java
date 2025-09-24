@@ -6,7 +6,11 @@ package com.helianhealth.agent.exception;
 public enum DatabaseRemoteBusinessException implements BusinessCode, BusinessExceptionSupplier {
 
     DATABASE_TEMPLATE_NOT_FOUND("DATABASE-001", "SQL模式下务必有模板配置！"),
-    DATABASE_OPERATION_NOT_FOUND("DATABASE-002", "SQL模式下务必有操作类型!")
+    DATABASE_OPERATION_NOT_FOUND("DATABASE-002", "SQL模式下务必有操作类型!"),
+
+    DATABASE_PARAM_TYPE_ERROR("DATABASE-003", "SQL模式下节点类型错误!"),
+    DATABASE_PLACE_HOLDER_ERROR("DATABASE-004", "SQL模板中存在未匹配的参数占位符!")
+
     ;
 
     private final String code;

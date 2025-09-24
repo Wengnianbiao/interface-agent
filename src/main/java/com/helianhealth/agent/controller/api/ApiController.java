@@ -5,6 +5,7 @@ import com.helianhealth.agent.controller.request.JarvisRequest;
 import com.helianhealth.agent.schedule.FlowNodeDispatcher;
 import com.helianhealth.agent.utils.ResponseModelUtils;
 import io.swagger.annotations.ApiOperation;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -21,7 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @Slf4j
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class ApiController {
 
     private final FlowNodeDispatcher dispatcherManager;
@@ -32,9 +33,7 @@ public class ApiController {
         return ResponseModelUtils.success();
     }
 
-    @RequestMapping("/HLOpenApi/Hjk")
-    @PostMapping
-    @ResponseBody
+    @PostMapping("/HLOpenApi/Hjk")
     public ResultData<Object> invokeJarvisApi(@RequestBody JarvisRequest request) {
         MDC.put("method", request.getBusinessMethod() == null ? "" : request.getBusinessMethod());
         try {

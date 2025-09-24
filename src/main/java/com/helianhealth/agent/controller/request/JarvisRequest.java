@@ -2,14 +2,16 @@ package com.helianhealth.agent.controller.request;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import java.util.List;
 
+@Api("Jarvis请求入参")
 @Data
-@ApiModel("jarvis调用入参")
+@Accessors(chain = true)
 public class JarvisRequest {
 
     @ApiModelProperty("业务方法")

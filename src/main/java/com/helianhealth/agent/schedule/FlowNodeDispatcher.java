@@ -59,7 +59,7 @@ public class FlowNodeDispatcher {
             Optional<InterfaceWorkflowDO> workflowOptional = workflowService.findByInterfaceUri(interfaceUri);
             if (workflowOptional.isPresent()) {
                 InterfaceWorkflowDO workflow = workflowOptional.get();
-                // 2、参数预处理,根据入参格式转化
+                // 2、参数预处理,根据入参contentType转化为Map
                 Map<String, Object> businessData = contentParser.parseRequest(workflow, request);
 
                 // 3、调度工作流统一入参格式为Map<String,Object>
