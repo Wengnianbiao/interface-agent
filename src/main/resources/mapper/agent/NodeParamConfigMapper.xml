@@ -60,9 +60,6 @@
             <if test="mappingRule != null">
                 mapping_rule,
             </if>
-            <if test="operationType != null">
-                operation_type,
-            </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="processType != null">
@@ -100,9 +97,6 @@
             </if>
             <if test="mappingRule != null">
                 #{mappingRule,jdbcType=VARCHAR},
-            </if>
-            <if test="operationType != null">
-                #{operationType,jdbcType=VARCHAR},
             </if>
         </trim>
     </insert>
