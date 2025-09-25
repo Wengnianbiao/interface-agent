@@ -26,9 +26,9 @@ public class HttpApiClientManager {
     private static final Logger logger = LoggerFactory.getLogger(HttpApiClientManager.class);
 
     // 默认连接超时时间，单位毫秒
-    private static final int DEFAULT_CONNECTION_TIMEOUT = 10000;
+    private static final int DEFAULT_CONNECTION_TIMEOUT = 20000;
     // 默认请求超时时间，单位毫秒
-    private static final int DEFAULT_REQUEST_TIMEOUT = 10000;
+    private static final int DEFAULT_REQUEST_TIMEOUT = 20000;
     // 从连接池获取连接的超时时间，单位毫秒
     private static final int DEFAULT_CONNECTION_REQUEST_TIMEOUT = 10000;
 
