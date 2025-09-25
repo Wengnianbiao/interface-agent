@@ -26,9 +26,9 @@ public class ResponseConvertHelper {
         }
 
         try {
-            Map<String, String> metaJson = JsonUtils.fromJsonStringToMap(metaInfo);
+            Map<String, Object> metaJson = JsonUtils.toMap(metaInfo);
             // 获取响应类型，默认为json
-            String responseType = metaJson.get("responseType");
+            String responseType = (String) metaJson.get("responseType");
             if (StringUtils.isEmpty(responseType)) {
                 responseType = "json";
             }
