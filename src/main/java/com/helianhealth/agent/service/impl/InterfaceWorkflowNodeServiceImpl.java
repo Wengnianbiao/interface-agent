@@ -93,7 +93,7 @@ public class InterfaceWorkflowNodeServiceImpl implements InterfaceWorkflowNodeSe
 
     @Override
     public int update(InterfaceWorkflowNodeDO flowNodeDO) {
-        return flowNodeMapper.updateByPrimaryKeySelective(flowNodeDO);
+        return flowNodeMapper.updateNode(flowNodeDO);
     }
 
     @Override

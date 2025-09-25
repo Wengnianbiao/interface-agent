@@ -17,4 +17,10 @@ public interface InterfaceFlowNodeMapper extends Mapper<InterfaceWorkflowNodeDO>
      * @return 插入记录数
      */
     int createNode(InterfaceWorkflowNodeDO node);
+
+    /**
+     * 更新工作流节点
+     * @param node 工作流节点对象
+     */
+    int updateNode(InterfaceWorkflowNodeDO node);
 }

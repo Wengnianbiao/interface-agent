@@ -79,4 +79,17 @@
             </if>
         </where>
     </select>
+
+    <update id="updateNode" parameterType="com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO">
+        UPDATE interface_workflow_node
+        SET
+            node_name = #{nodeName,jdbcType=VARCHAR},
+            flow_id = #{flowId,jdbcType=INTEGER},
+            param_filter_expr = #{paramFilterExpr,jdbcType=VARCHAR},
+            node_type = #{nodeType,jdbcType=VARCHAR},
+            meta_info = #{metaInfo,jdbcType=VARCHAR},
+            schedule_expr = #{scheduleExpr,jdbcType=VARCHAR},
+            schedule_param_source_type = #{scheduleParamSourceType,jdbcType=VARCHAR}
+        WHERE node_id = #{nodeId}
+    </update>
 </mapper>
