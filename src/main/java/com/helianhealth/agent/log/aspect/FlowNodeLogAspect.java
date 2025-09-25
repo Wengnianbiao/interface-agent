@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
 import com.helianhealth.agent.service.InterfaceInvokeLogService;
+import com.helianhealth.agent.utils.JsonUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -45,7 +46,7 @@ public class FlowNodeLogAspect {
 
         LogContext context = new LogContext();
         context.setNodeId(flowNode.getNodeId());
-        context.setBusinessData(convertToJson(businessData));
+        context.setBusinessData(JsonUtils.toJsonString(businessData));
         logContext.set(context);
 
         try {
@@ -55,7 +56,7 @@ public class FlowNodeLogAspect {
             Object result = joinPoint.proceed();
 
             // 记录调用结果
-            context.setParamAfterInvoke(convertToJson(result));
+            context.setParamAfterInvoke(JsonUtils.toJsonString(result));
 
             return result;
         } catch (Exception e) {
@@ -84,7 +85,7 @@ public class FlowNodeLogAspect {
     public void collectParamPreProcessResult(Object result) {
         try {
             LogContext context = logContext.get();
-            context.setParamBeforeInvoke(convertToJson(result));
+            context.setParamBeforeInvoke((String) result);
         } catch (Exception e) {
             log.error("收集参数预处理结果失败", e);
         }
@@ -107,7 +108,7 @@ public class FlowNodeLogAspect {
             // 执行doInvoke方法
             Object result = joinPoint.proceed();
             // 记录响应结果
-            context.setRemoteInvokeResponse(convertToJson(result));
+            context.setRemoteInvokeResponse(JsonUtils.toJsonString(result));
             return result;
         } finally {
             // 计算doInvoke方法执行耗时
@@ -132,21 +133,6 @@ public class FlowNodeLogAspect {
             );
         } catch (Exception e) {
             log.error("保存接口调用日志失败", e);
-        }
-    }
-
-    /**
-     * 对象转JSON字符串工具方法
-     */
-    private String convertToJson(Object obj) {
-        if (obj == null) {
-            return "{}";
-        }
-        try {
-            return objectMapper.writeValueAsString(obj);
-        } catch (JsonProcessingException e) {
-            log.error("对象转JSON失败", e);
-            return "{}";
         }
     }
 
