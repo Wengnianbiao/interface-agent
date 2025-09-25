@@ -135,4 +135,22 @@
             </if>
         </where>
     </select>
+
+    <update id="updateNodeParamConfig" parameterType="com.helianhealth.agent.model.domain.NodeParamConfigDO">
+        UPDATE node_param_config
+        SET
+            process_type = #{processType,jdbcType=VARCHAR},
+            node_id = #{nodeId,jdbcType=INTEGER},
+            parent_id = #{parentId,jdbcType=INTEGER},
+            source_param_key = #{sourceParamKey,jdbcType=VARCHAR},
+            source_param_type = #{sourceParamType,jdbcType=VARCHAR},
+            param_desc = #{paramDesc,jdbcType=VARCHAR},
+            target_param_key = #{targetParamKey,jdbcType=VARCHAR},
+            target_param_type = #{targetParamType,jdbcType=VARCHAR},
+            sort = #{sort,jdbcType=INTEGER},
+            mapping_source = #{mappingSource,jdbcType=VARCHAR},
+            mapping_type = #{mappingType,jdbcType=VARCHAR},
+            mapping_rule = #{mappingRule,jdbcType=VARCHAR}
+        WHERE config_id = #{configId}
+    </update>
 </mapper>

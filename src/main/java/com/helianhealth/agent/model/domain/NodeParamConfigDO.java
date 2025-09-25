@@ -2,7 +2,6 @@ package com.helianhealth.agent.model.domain;
 
 import com.helianhealth.agent.enums.MappingSource;
 import com.helianhealth.agent.enums.MappingType;
-import com.helianhealth.agent.enums.OperationType;
 import com.helianhealth.agent.enums.ParamType;
 import com.helianhealth.agent.enums.ProcessType;
 import lombok.AllArgsConstructor;
@@ -86,13 +85,6 @@ public class NodeParamConfigDO {
     @Column(name = "target_param_type")
     @Enumerated(EnumType.STRING)
     private ParamType targetParamType;
-
-    /**
-     * 三方接口所需要的参数类型
-     */
-    @Column(name = "operation_type")
-    @Enumerated(EnumType.STRING)
-    private OperationType operationType;
 
     /**
      * 排序号（控制参数顺序）

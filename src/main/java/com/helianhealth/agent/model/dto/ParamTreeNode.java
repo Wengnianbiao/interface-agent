@@ -1,6 +1,5 @@
 package com.helianhealth.agent.model.dto;
 
-import com.helianhealth.agent.enums.OperationType;
 import com.helianhealth.agent.enums.ParamType;
 import lombok.Builder;
 import lombok.Data;

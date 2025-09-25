@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSON;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.helianhealth.agent.common.PageList;
+import com.helianhealth.agent.enums.ParamType;
 import com.helianhealth.agent.enums.ProcessType;
 import com.helianhealth.agent.mapper.agent.NodeParamConfigMapper;
 import com.helianhealth.agent.model.domain.NodeParamConfigDO;
@@ -67,10 +68,17 @@ public class NodeParamConfigServiceImpl implements NodeParamConfigService {
             if (config == null || config.getConfigId() == null) {
                 throw new IllegalArgumentException("参数不能为空，configId 必须存在");
             }
-            log.info("入参{}", config);
+            // 原参数类型为 null 时，将原参数名设置为null
+            if (config.getSourceParamType() == ParamType.NONE) {
+                config.setSourceParamKey(null);
+            }
+            // 为sort赋予默认值为1
+            if (config.getSort() == null) {
+                config.setSort(1);
+            }
 
             // 执行更新操作
-            int result = nodeParamConfigMapper.updateByPrimaryKeySelective(config);
+            int result = nodeParamConfigMapper.updateNodeParamConfig(config);
 
             if (result > 0) {
                 // 查询更新后的数据
@@ -91,6 +99,10 @@ public class NodeParamConfigServiceImpl implements NodeParamConfigService {
             // 验证参数
             if (config == null) {
                 throw new IllegalArgumentException("参数不能为空");
+            }
+            // 为sort赋予默认值为1
+            if (config.getSort() == null) {
+                config.setSort(1);
             }
 
             // 执行插入操作

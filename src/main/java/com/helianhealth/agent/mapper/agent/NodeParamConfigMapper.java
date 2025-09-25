@@ -22,4 +22,11 @@ public interface NodeParamConfigMapper extends Mapper<NodeParamConfigDO>{
      * @return 插入记录数
      */
     int insertNodeParamConfig(NodeParamConfigDO config);
+
+    /**
+     * 更新节点参数配置
+     * @param config 节点参数配置对象
+     * @return 更新记录数
+     */
+    int updateNodeParamConfig(NodeParamConfigDO config);
 }
