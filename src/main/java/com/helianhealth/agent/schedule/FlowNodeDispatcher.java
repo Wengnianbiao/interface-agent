@@ -45,7 +45,7 @@ public class FlowNodeDispatcher {
                 return processJarvisRsp(scheduleRsp);
             } else {
                 log.error(InstanceBusinessException.METHOD_NOT_SUPPORT.getMessage());
-                throw InstanceBusinessException.METHOD_NOT_SUPPORT.toException();
+                return ResultData.ok();
             }
         } catch (Exception e) {
             log.error("dispatch request error:", e);
