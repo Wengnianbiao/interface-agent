@@ -1,9 +1,9 @@
 package com.helianhealth.agent.exception;
 
 /**
- * 实例异常
+ * 工作流异常
  */
-public enum InstanceBusinessException implements BusinessCode, BusinessExceptionSupplier {
+public enum WorkflowBusinessException implements BusinessCode, BusinessExceptionSupplier {
 
     METHOD_NOT_SUPPORT("API-001", "Unsupported method calls!"),
     FLOW_NOT_FOUND("API-002", "Flow not found!"),
@@ -12,7 +12,7 @@ public enum InstanceBusinessException implements BusinessCode, BusinessException
     private final String code;
     private final String defaultMessage;
 
-    InstanceBusinessException(String code, String defaultMessage) {
+    WorkflowBusinessException(String code, String defaultMessage) {
         this.code = code;
         this.defaultMessage = defaultMessage;
     }

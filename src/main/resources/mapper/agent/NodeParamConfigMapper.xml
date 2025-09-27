@@ -17,7 +17,6 @@
         <result property="mappingSource" column="mapping_source"/>
         <result property="mappingType" column="mapping_type"/>
         <result property="mappingRule" column="mapping_rule"/>
-        <result property="operationType" column="operation_type"/>
     </resultMap>
 
     <insert id="insertNodeParamConfig" parameterType="com.helianhealth.agent.model.domain.NodeParamConfigDO"

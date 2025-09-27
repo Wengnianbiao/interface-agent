@@ -2,7 +2,7 @@ package com.helianhealth.agent.schedule;
 
 import com.helianhealth.agent.common.ResultData;
 import com.helianhealth.agent.controller.request.JarvisRequest;
-import com.helianhealth.agent.exception.InstanceBusinessException;
+import com.helianhealth.agent.exception.WorkflowBusinessException;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowDO;
 import com.helianhealth.agent.service.InterfaceWorkflowService;
 import com.helianhealth.agent.utils.JsonUtils;
@@ -44,7 +44,7 @@ public class FlowNodeDispatcher {
                         businessData);
                 return processJarvisRsp(scheduleRsp);
             } else {
-                log.error(InstanceBusinessException.METHOD_NOT_SUPPORT.getMessage());
+                log.error(WorkflowBusinessException.METHOD_NOT_SUPPORT.getMessage());
                 return ResultData.ok();
             }
         } catch (Exception e) {
@@ -69,8 +69,8 @@ public class FlowNodeDispatcher {
                 // 4、根据工作流内容类型构建响应
                 return contentParser.responseBuilder(workflow, scheduleRsp);
             } else {
-                log.error(InstanceBusinessException.METHOD_NOT_SUPPORT.getMessage());
-                throw InstanceBusinessException.METHOD_NOT_SUPPORT.toException();
+                log.error(WorkflowBusinessException.METHOD_NOT_SUPPORT.getMessage());
+                throw WorkflowBusinessException.METHOD_NOT_SUPPORT.toException();
             }
         } catch (Exception e) {
             log.error("dispatch request error:", e);

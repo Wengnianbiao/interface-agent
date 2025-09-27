@@ -5,15 +5,14 @@ import com.helianhealth.agent.enums.MappingSource;
 import com.helianhealth.agent.enums.MappingType;
 import com.helianhealth.agent.enums.NodeType;
 import com.helianhealth.agent.enums.ParamType;
-import com.helianhealth.agent.mapper.agent.NodeParamConfigMapper;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
 import com.helianhealth.agent.model.domain.NodeParamConfigDO;
 import com.helianhealth.agent.model.dto.ParamTreeNode;
 import com.helianhealth.agent.remote.AbstractClientProxy;
 import com.helianhealth.agent.utils.JsonUtils;
 import com.helianhealth.agent.utils.ParamNodeUtils;
-import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -109,8 +108,8 @@ public class HttpClientProxy extends AbstractClientProxy {
     private void doProcessArrayNodeType(NodeParamConfigDO config, List<NodeParamConfigDO> allNodes, Map<String, Object> businessData, Map<String, Object> rootBusinessData, ParamTreeNode node) {
         // 根据映射源进入迭代
         Object sourceValue = config.getMappingSource() == MappingSource.INPUT ?
-                rootBusinessData.get(config.getSourceParamKey()) :
-                businessData.get(config.getSourceParamKey());
+                getSourceValue(config.getSourceParamKey(), rootBusinessData) :
+                getSourceValue(config.getSourceParamKey(), businessData);
 
         JSONArray jsonArray = new JSONArray();
 
@@ -128,13 +127,10 @@ public class HttpClientProxy extends AbstractClientProxy {
                 jsonArray.add(ParamNodeUtils.convertNodesToMap(arrayChildren));
             }
             node.setParamValue(jsonArray);
-        } else if (config.getSourceParamType() == ParamType.ARRAY && sourceValue instanceof List) {
+        } else if (config.getSourceParamType() == ParamType.ARRAY && sourceValue != null) {
             // 情况2: 源参数是数组，需要处理数组中的每个元素
-            List<?> sourceList = (List<?>) sourceValue;
-            // 如果是直连映射，也就是数组元素是基本数据类型就直接映射
-            if (config.getMappingType().equals(MappingType.DIRECT)) {
-                node.setParamValue(sourceList);
-            } else {
+             if (sourceValue instanceof List){
+                List<?> sourceList = (List<?>) sourceValue;
                 for (Object item : sourceList) {
                     // 如果数组是一个对象数组配置的时候需要增加一个虚拟节点!
                     List<ParamTreeNode> arrayChildren = buildParamTree(allNodes,
@@ -149,23 +145,72 @@ public class HttpClientProxy extends AbstractClientProxy {
                         jsonArray.add(ParamNodeUtils.convertNodesToMap(arrayChildren));
                     }
                 }
-                // 数组是嵌套结构只能通过value去保持这种嵌套结构
-                node.setParamValue(jsonArray);
+            } else if (sourceValue instanceof Map) {
+                 List<ParamTreeNode> arrayChildren = buildParamTree(allNodes,
+                         config.getConfigId(),
+                         JsonUtils.toMap(sourceValue),
+                         rootBusinessData);
+                 jsonArray.add(ParamNodeUtils.convertNodesToMap(arrayChildren));
             }
-        } else {
-            // 兼容单个Object转化成List的场景
-            List<ParamTreeNode> arrayChildren = buildParamTree(allNodes,
-                    config.getConfigId(),
-                    businessData,
-                    rootBusinessData);
-            // 提取单个节点的值
-            if (arrayChildren != null && arrayChildren.size() == 1) {
-                ParamTreeNode singleNode = arrayChildren.get(0);
-                jsonArray.add(singleNode.getParamValue());
-            } else {
+            // 数组是嵌套结构只能通过value去保持这种嵌套结构
+            node.setParamValue(jsonArray);
+        } else if (config.getSourceParamType() == ParamType.PURE_ARRAY && sourceValue != null){ // 纯数组的场景说明入参是一个基础数据类型的数组
+            // 如果是直连映射，也就是数组元素是基本数据类型就直接映射
+            if (config.getMappingType().equals(MappingType.DIRECT)) {
+                node.setParamValue(sourceValue);
+            }
+            if (sourceValue instanceof List) {
+                // 此时的数组一定是基础数据类型的数组
+                List<?> sourceList = (List<?>) sourceValue;
+                for (Object item : sourceList) {
+                    Map<String, Object> itemNode = new HashMap<>();
+                    itemNode.put(config.getTargetParamKey(), item);
+                    List<ParamTreeNode> arrayChildren = buildParamTree(allNodes,
+                            config.getConfigId(),
+                            JsonUtils.toMap(itemNode),
+                            rootBusinessData);
+                    // 提取单个节点的值
+                    if (arrayChildren != null && arrayChildren.size() == 1) {
+                        ParamTreeNode singleNode = arrayChildren.get(0);
+                        jsonArray.add(singleNode.getParamValue());
+                    } else {
+                        jsonArray.add(ParamNodeUtils.convertNodesToMap(arrayChildren));
+                    }
+                }
+            } else if (sourceValue instanceof String) {
+                Map<String, Object> itemNode = new HashMap<>();
+                itemNode.put(config.getTargetParamKey(), sourceValue);
+                List<ParamTreeNode> arrayChildren = buildParamTree(allNodes,
+                        config.getConfigId(),
+                        JsonUtils.toMap(itemNode),
+                        rootBusinessData);
                 jsonArray.add(ParamNodeUtils.convertNodesToMap(arrayChildren));
             }
+
             node.setParamValue(jsonArray);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object getSourceValue(String sourceParamKey, Map<String, Object> businessData) {
+        if (businessData == null || StringUtils.isEmpty(sourceParamKey)) {
+            return null;
+        }
+        String[] keys = sourceParamKey.split("\\.");
+        Object current = businessData;
+
+        for (String key : keys) {
+            if (!(current instanceof Map)) {
+                return null; // 非 Map 类型无法继续深入
+            }
+
+            Map<String, Object> currentMap = (Map<String, Object>) current;
+            current = currentMap.get(key);
+            if (current == null) {
+                return null;
+            }
+        }
+
+        return current;
     }
 }

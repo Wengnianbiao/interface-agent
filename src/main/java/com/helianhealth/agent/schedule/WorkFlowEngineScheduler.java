@@ -1,7 +1,7 @@
 package com.helianhealth.agent.schedule;
 
 import com.helianhealth.agent.enums.ScheduleParamSourceType;
-import com.helianhealth.agent.exception.InstanceBusinessException;
+import com.helianhealth.agent.exception.WorkflowBusinessException;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
 import com.helianhealth.agent.service.InterfaceWorkflowNodeService;
 import com.helianhealth.agent.utils.ExpressionMapperUtils;
@@ -45,8 +45,8 @@ public class WorkFlowEngineScheduler {
             // 多个节点,则说明这是个并行业务,譬如申请单,节点工作完成后需要有个聚合操作
             flowNodeResponse = processParallelNode(flowNodes, businessData);
         } else {
-            log.error(InstanceBusinessException.FLOW_NOT_FOUND.getMessage());
-            throw InstanceBusinessException.FLOW_NOT_FOUND.toException();
+            log.error(WorkflowBusinessException.FLOW_NOT_FOUND.getMessage());
+            throw WorkflowBusinessException.FLOW_NOT_FOUND.toException();
         }
         return flowNodeResponse;
     }
@@ -100,7 +100,7 @@ public class WorkFlowEngineScheduler {
 
         if (parser != null && !(parser instanceof List)) {
             log.error("表达式解析结果类型错误，期望List<Integer>，实际类型: {}", parser.getClass().getSimpleName());
-            throw InstanceBusinessException.EXPRESSION_PARSING_ERROR.toException();
+            throw WorkflowBusinessException.EXPRESSION_PARSING_ERROR.toException();
         }
 
         if (parser != null) {
@@ -108,7 +108,7 @@ public class WorkFlowEngineScheduler {
             for (Object item : resultList) {
                 if (!(item instanceof Integer)) {
                     log.error("表达式解析结果元素类型错误，Integer，实际类型: {}", item != null ? item.getClass().getSimpleName() : "null");
-                    throw InstanceBusinessException.EXPRESSION_PARSING_ERROR.toException();
+                    throw WorkflowBusinessException.EXPRESSION_PARSING_ERROR.toException();
                 }
             }
         }

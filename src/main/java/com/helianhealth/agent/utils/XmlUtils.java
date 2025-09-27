@@ -116,64 +116,80 @@ public class XmlUtils {
 
         // 处理属性
         NamedNodeMap attributes = element.getAttributes();
-        if (attributes != null) {
+        if (attributes != null && attributes.getLength() > 0) {
             for (int i = 0; i < attributes.getLength(); i++) {
                 Node attribute = attributes.item(i);
                 resultMap.put(attribute.getNodeName(), attribute.getNodeValue());
             }
         }
 
-        // 处理子节点
+        // 收集文本内容和子元素
+        StringBuilder textContent = new StringBuilder();
+        List<Element> childElements = new ArrayList<>();
+
         NodeList childNodes = element.getChildNodes();
         for (int i = 0; i < childNodes.getLength(); i++) {
             Node node = childNodes.item(i);
-
             if (node.getNodeType() == Node.ELEMENT_NODE) {
-                Element childElement = (Element) node;
-                String tagName = childElement.getNodeName();
-
-                // 递归处理子元素
-                Map<String, Object> childMap = elementToMap(childElement);
-
-                // 如果该节点已存在，则转换为列表
-                if (resultMap.containsKey(tagName)) {
-                    Object existingValue = resultMap.get(tagName);
-                    if (existingValue instanceof List) {
-                        ((List<Map<String, Object>>) existingValue).add(childMap);
-                    } else {
-                        List<Object> list = new ArrayList<>();
-                        list.add(existingValue);
-                        list.add(childMap);
-                        resultMap.put(tagName, list);
-                    }
-                } else {
-                    resultMap.put(tagName, childMap);
-                }
+                childElements.add((Element) node);
             } else if (node.getNodeType() == Node.TEXT_NODE) {
-                String textValue = node.getNodeValue().trim();
-                if (!textValue.isEmpty()) {
-                    resultMap.put("#text", textValue);
+                // 处理文本节点，过滤空白
+                String text = node.getNodeValue().trim();
+                if (!text.isEmpty()) {
+                    textContent.append(text);
                 }
             }
         }
 
-        // 如果只有文本内容，直接返回文本（不嵌套）
-        if (resultMap.size() == 1 && resultMap.containsKey("#text")) {
-            return Collections.singletonMap("#text", resultMap.get("#text"));
-        }
+        // 处理子元素
+        for (Element childElement : childElements) {
+            String tagName = childElement.getNodeName();
+            Object childValue = elementToMap(childElement);
 
-        for (Map.Entry<String, Object> entry : resultMap.entrySet()) {
-            Object value = entry.getValue();
-            if (value instanceof Map && ((Map<?, ?>) value).containsKey("#text")) {
-                Map<String, Object> textMap = (Map<String, Object>) value;
-                if (textMap.size() == 1) {
-                    entry.setValue(textMap.get("#text"));
+            // 如果子元素是纯文本节点，直接提取值
+            if (childValue instanceof Map && ((Map<?,?>) childValue).size() == 1) {
+                Map<?,?> childMap = (Map<?,?>) childValue;
+                Object firstValue = childMap.values().iterator().next();
+                // 如果子节点只包含自身标签和文本值，直接使用文本值
+                if (firstValue instanceof String && childMap.containsKey(tagName)) {
+                    childValue = firstValue;
                 }
+            }
+
+            // 处理列表情况
+            if (resultMap.containsKey(tagName)) {
+                Object existingValue = resultMap.get(tagName);
+                if (existingValue instanceof List) {
+                    ((List<Object>) existingValue).add(childValue);
+                } else {
+                    List<Object> list = new ArrayList<>();
+                    list.add(existingValue);
+                    list.add(childValue);
+                    resultMap.put(tagName, list);
+                }
+            } else {
+                resultMap.put(tagName, childValue);
             }
         }
 
+        // 处理当前节点的文本内容（如果没有子元素但有文本）
+        if (childElements.isEmpty() && textContent.length() > 0) {
+            return createSingleValueMap(element.getNodeName(), textContent.toString());
+        }
+
+        // 如果是根节点或包含子元素的节点，返回完整Map
         return resultMap;
     }
+
+    /**
+     * 创建只包含一个键值对的Map
+     */
+    private static Map<String, Object> createSingleValueMap(String key, Object value) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put(key, value);
+        return map;
+    }
+
 
     /**
      * 解析SOAP请求XML，支持命名空间配置
