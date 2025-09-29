@@ -4,7 +4,7 @@ import com.helianhealth.agent.common.PageList;
 import com.helianhealth.agent.common.ResultData;
 import com.helianhealth.agent.model.domain.InterfaceInvokeLogDO;
 import com.helianhealth.agent.service.InterfaceInvokeLogService;
-import com.helianhealth.agent.utils.ResponseModelUtils;
+import com.helianhealth.agent.utils.ResponseRenderUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,10 +30,10 @@ public class ApiLogController {
             @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
         try {
             PageList<InterfaceInvokeLogDO> pageList = interfaceInvokeLogService.findAllInvokeLogs(nodeId, pageNum, pageSize);
-            return ResponseModelUtils.render(pageList);
+            return ResponseRenderUtils.render(pageList);
         } catch (Exception e) {
             log.error("获取节点参数配置列表失败", e);
-            return ResponseModelUtils.error("获取节点参数配置列表失败: " + e.getMessage());
+            return ResponseRenderUtils.error("获取节点参数配置列表失败: " + e.getMessage());
         }
     }
 }

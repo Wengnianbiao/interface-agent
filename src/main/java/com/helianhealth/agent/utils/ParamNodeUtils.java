@@ -15,28 +15,6 @@ public class ParamNodeUtils {
      * 将ParamNodeDTO列表转换为Map<String, Object>
      * 递归处理子节点，支持嵌套对象结构
      */
-    public static Map<String, Object> convertNodesToMap(List<ParamTreeNode> nodeList) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        if (nodeList == null || nodeList.isEmpty()) {
-            return result;
-        }
-
-        for (ParamTreeNode node : nodeList) {
-            String key = node.getParamKey();
-            // 处理值：如果有子节点则递归转换，否则直接使用节点的value
-            Object value = node.getChildren() != null && !node.getChildren().isEmpty()
-                    ? convertNodesToMap(node.getChildren())
-                    : node.getParamValue();
-
-            result.put(key, value);
-        }
-        return result;
-    }
-
-    /**
-     * 将ParamNodeDTO列表转换为Map<String, Object>
-     * 递归处理子节点，支持嵌套对象结构
-     */
     public static Map<String, Object> convertToJsonFormatMap(List<ParamTreeNode> nodeList) {
         Map<String, Object> result = new LinkedHashMap<>();
         if (nodeList == null || nodeList.isEmpty()) {
@@ -68,23 +46,6 @@ public class ParamNodeUtils {
                         ? convertToJsonFormatMap(node.getChildren())
                         : node.getParamValue();
                 result.put(key, value);
-            }
-        }
-        return result;
-    }
-
-
-    /**
-     * 将ParamNodeDTO列表转换为Map
-     * 递归处理子节点，支持嵌套对象结构
-     */
-    public static Map<String, ParamTreeNode> convertToParamNodeMap(List<ParamTreeNode> nodes) {
-        Map<String, ParamTreeNode> result = new LinkedHashMap<>();
-        if (nodes != null) {
-            for (ParamTreeNode node : nodes) {
-                if (node != null && node.getParamKey() != null) {
-                    result.put(node.getParamKey(), node);
-                }
             }
         }
         return result;
@@ -214,7 +175,7 @@ public class ParamNodeUtils {
             String key = node.getParamKey();
             // 处理值：如果有子节点则递归转换，否则直接使用节点的value
             Object value = node.getChildren() != null && !node.getChildren().isEmpty()
-                    ? convertNodesToMap(node.getChildren())  // 递归处理子对象
+                    ? convertToXmlFormatMap(node.getChildren())
                     : node.getParamValue();
 
             result.put(key, value);

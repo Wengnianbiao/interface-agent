@@ -7,7 +7,7 @@ import com.helianhealth.agent.controller.workflow.reponse.NodeParamConfigExportR
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
 import com.helianhealth.agent.service.InterfaceWorkflowNodeService;
 import com.helianhealth.agent.service.NodeParamConfigService;
-import com.helianhealth.agent.utils.ResponseModelUtils;
+import com.helianhealth.agent.utils.ResponseRenderUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -42,10 +42,10 @@ public class WorkflowNodeController {
         try {
             PageList<InterfaceWorkflowNodeDO> nodes = interfaceFlowNodeService.getAllNodes(flowId, pageNum, pageSize);
 
-            return ResponseModelUtils.render(nodes);
+            return ResponseRenderUtils.render(nodes);
         } catch (Exception e) {
             log.error("获取工作流节点失败", e);
-            return ResponseModelUtils.error("获取工作流节点失败: " + e.getMessage());
+            return ResponseRenderUtils.error("获取工作流节点失败: " + e.getMessage());
         }
     }
 
@@ -54,10 +54,10 @@ public class WorkflowNodeController {
         try {
             List<InterfaceWorkflowNodeDO> nodes = interfaceFlowNodeService.getAllNodesWithoutPaged();
 
-            return ResponseModelUtils.render(nodes);
+            return ResponseRenderUtils.render(nodes);
         } catch (Exception e) {
             log.error("获取工作流节点失败", e);
-            return ResponseModelUtils.error("获取工作流节点失败: " + e.getMessage());
+            return ResponseRenderUtils.error("获取工作流节点失败: " + e.getMessage());
         }
     }
 
@@ -70,10 +70,10 @@ public class WorkflowNodeController {
     public ResultData<Integer> createNode(@RequestBody WorkflowNodeCreateReq node) {
         try {
             int savedNode = interfaceFlowNodeService.save(node);
-            return ResponseModelUtils.render(savedNode);
+            return ResponseRenderUtils.render(savedNode);
         } catch (Exception e) {
             log.error("创建工作流节点失败", e);
-            return ResponseModelUtils.error("创建工作流节点失败: " + e.getMessage());
+            return ResponseRenderUtils.error("创建工作流节点失败: " + e.getMessage());
         }
     }
 
@@ -85,12 +85,12 @@ public class WorkflowNodeController {
         try {
             InterfaceWorkflowNodeDO node = interfaceFlowNodeService.selectByNodeId(nodeId);
             if (node == null) {
-                return ResponseModelUtils.error("工作流节点不存在");
+                return ResponseRenderUtils.error("工作流节点不存在");
             }
-            return ResponseModelUtils.render(node);
+            return ResponseRenderUtils.render(node);
         } catch (Exception e) {
             log.error("获取工作流节点失败", e);
-            return ResponseModelUtils.error("获取工作流节点失败: " + e.getMessage());
+            return ResponseRenderUtils.error("获取工作流节点失败: " + e.getMessage());
         }
     }
 
@@ -101,10 +101,10 @@ public class WorkflowNodeController {
     public ResultData<Integer> updateNode(@RequestBody InterfaceWorkflowNodeDO node) {
         try {
             int result = interfaceFlowNodeService.update(node);
-            return ResponseModelUtils.render(result);
+            return ResponseRenderUtils.render(result);
         } catch (Exception e) {
             log.error("更新工作流节点失败", e);
-            return ResponseModelUtils.error("更新工作流节点失败: " + e.getMessage());
+            return ResponseRenderUtils.error("更新工作流节点失败: " + e.getMessage());
         }
     }
 
@@ -115,10 +115,10 @@ public class WorkflowNodeController {
     public ResultData<String> deleteNode(@PathVariable Integer nodeId) {
         try {
             interfaceFlowNodeService.deleteByNodeId(nodeId);
-            return ResponseModelUtils.render("工作流节点删除成功");
+            return ResponseRenderUtils.render("工作流节点删除成功");
         } catch (Exception e) {
             log.error("删除工作流节点失败", e);
-            return ResponseModelUtils.error("删除工作流节点失败: " + e.getMessage());
+            return ResponseRenderUtils.error("删除工作流节点失败: " + e.getMessage());
         }
     }
 
@@ -127,10 +127,10 @@ public class WorkflowNodeController {
         try {
             NodeParamConfigExportResponse nodeParamConfigExportResponse = interfaceFlowNodeService.exportNodeParamConfig(nodeId);
 
-            return ResponseModelUtils.render(nodeParamConfigExportResponse);
+            return ResponseRenderUtils.render(nodeParamConfigExportResponse);
         } catch (Exception e) {
             log.error("获取工作流节点失败", e);
-            return ResponseModelUtils.error("获取工作流节点失败: " + e.getMessage());
+            return ResponseRenderUtils.error("获取工作流节点失败: " + e.getMessage());
         }
     }
 
@@ -143,18 +143,18 @@ public class WorkflowNodeController {
             @RequestParam("file") MultipartFile file) {
         try {
             if (nodeId == null) {
-                return ResponseModelUtils.error("nodeId不能为空");
+                return ResponseRenderUtils.error("nodeId不能为空");
             }
 
             if (file == null || file.isEmpty()) {
-                return ResponseModelUtils.error("文件不能为空");
+                return ResponseRenderUtils.error("文件不能为空");
             }
 
             nodeParamConfigService.importNodeParamConfig(nodeId, file);
-            return ResponseModelUtils.success();
+            return ResponseRenderUtils.success();
         } catch (Exception e) {
             log.error("导入节点参数配置失败", e);
-            return ResponseModelUtils.error("导入节点参数配置失败: " + e.getMessage());
+            return ResponseRenderUtils.error("导入节点参数配置失败: " + e.getMessage());
         }
     }
 }
