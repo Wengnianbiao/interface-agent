@@ -1,5 +1,7 @@
 package com.helianhealth.agent.remote.http;
 
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.helianhealth.agent.enums.ParamType;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
 import com.helianhealth.agent.model.dto.ParamTreeNode;
@@ -36,16 +38,9 @@ public class HttpRequestHandler implements ParamResolver {
         if (params == null || params.isEmpty()) {
             return "";
         }
-        // 兼容调用方的请求体是数组的情况
+        // 兼容调用方的请求体是纯数组的场景,e.g. [1,2,3] or [{"name":"John"},{"name":"Mike"}]
         if (params.size() == 1 && params.get(0).getParamType() == ParamType.PURE_ARRAY) {
-            Object paramValue = params.get(0).getParamValue();
-            // 安全地处理不同类型的参数值
-            if (paramValue instanceof String) {
-                return (String) paramValue;
-            } else {
-                // 如果不是String类型，转换为JSON字符串
-                return JsonUtils.toJsonString(paramValue);
-            }
+            return JsonUtils.toJsonString(processArrayNodeType(params.get(0)));
         }
         Map<String, Object> queryParams = new HashMap<>();
 
@@ -65,10 +60,8 @@ public class HttpRequestHandler implements ParamResolver {
             case LONG:
             case BOOLEAN:
                 return node.getParamValue();
-            // 这里的数组处理直接用封装好的JSON数据,这样保证嵌套结构不丢失
-            // 但是其实还需要处理一种如果数组只有一个元素的情况
             case ARRAY:
-                return node.getParamValue();
+                return processArrayNodeType(node);
 
             case OBJECT:
                 if (node.getChildren() != null && !node.getChildren().isEmpty()) {
@@ -86,6 +79,39 @@ public class HttpRequestHandler implements ParamResolver {
             default:
                 return node.getParamValue() != null ? node.getParamValue().toString() : null;
         }
+    }
+
+    private Object processArrayNodeType(ParamTreeNode node) {
+        JSONArray jsonArray = new JSONArray();
+
+        if (node.getChildren() != null && !node.getChildren().isEmpty()) {
+            // 遍历所有虚拟节点
+            for (ParamTreeNode virtualNode : node.getChildren()) {
+                // 虚拟节点的子节点才是真正的元素
+                if (virtualNode.getChildren() != null && !virtualNode.getChildren().isEmpty()) {
+                    List<ParamTreeNode> actualNodes = virtualNode.getChildren();
+
+                    if (actualNodes.size() == 1) {
+                        // 只有一个子节点说明是基础数据类型的节点，直接提取值加入数组
+                        ParamTreeNode actualNode = actualNodes.get(0);
+                        Object value = extractValueFromNode(actualNode);
+                        jsonArray.add(value);
+                    } else {
+                        // 多个子节点，封装成对象后加入数组
+                        JSONObject obj = new JSONObject();
+                        for (ParamTreeNode actualNode : actualNodes) {
+                            if (actualNode.getParamKey() != null) {
+                                Object value = extractValueFromNode(actualNode);
+                                obj.put(actualNode.getParamKey(), value);
+                            }
+                        }
+                        jsonArray.add(obj);
+                    }
+                }
+            }
+        }
+
+        return jsonArray;
     }
 
     public String executeHttpRequest(String url, String method, Map<String, String> headers, String requestBody) throws IOException, ParseException {

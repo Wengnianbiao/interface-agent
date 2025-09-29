@@ -6,7 +6,7 @@ import com.helianhealth.agent.common.ResultData;
 import com.helianhealth.agent.enums.ProcessType;
 import com.helianhealth.agent.model.domain.NodeParamConfigDO;
 import com.helianhealth.agent.service.NodeParamConfigService;
-import com.helianhealth.agent.utils.ResponseModelUtils;
+import com.helianhealth.agent.utils.ResponseRenderUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -42,10 +42,10 @@ public class NodeParamConfigController {
             @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
         try {
             PageList<NodeParamConfigDO> pageList = nodeParamConfigService.findAllNodeParamConfigs(nodeId, processType, pageNum, pageSize);
-            return ResponseModelUtils.render(pageList);
+            return ResponseRenderUtils.render(pageList);
         } catch (Exception e) {
             log.error("获取节点参数配置列表失败", e);
-            return ResponseModelUtils.error("获取节点参数配置列表失败: " + e.getMessage());
+            return ResponseRenderUtils.error("获取节点参数配置列表失败: " + e.getMessage());
         }
     }
 
@@ -58,10 +58,10 @@ public class NodeParamConfigController {
             @RequestParam(value = "processType", required = false) ProcessType processType) {
         try {
             List<NodeParamConfigDO> pageList = nodeParamConfigService.findAllNodeParamConfigsUnpaged(nodeId, processType);
-            return ResponseModelUtils.render(pageList);
+            return ResponseRenderUtils.render(pageList);
         } catch (Exception e) {
             log.error("获取节点参数配置列表失败", e);
-            return ResponseModelUtils.error("获取节点参数配置列表失败: " + e.getMessage());
+            return ResponseRenderUtils.error("获取节点参数配置列表失败: " + e.getMessage());
         }
     }
 
@@ -75,24 +75,24 @@ public class NodeParamConfigController {
             log.info("创建节点参数配置: {}", config);
             // 验证必要参数
             if (config == null) {
-                return ResponseModelUtils.error("参数不能为空");
+                return ResponseRenderUtils.error("参数不能为空");
             }
 
             if (config.getProcessType() == null) {
-                return ResponseModelUtils.error("processType 不能为空");
+                return ResponseRenderUtils.error("processType 不能为空");
             }
 
             // 调用服务层保存逻辑
             NodeParamConfigDO savedConfig = nodeParamConfigService.save(config);
 
             if (savedConfig != null) {
-                return ResponseModelUtils.render(savedConfig);
+                return ResponseRenderUtils.render(savedConfig);
             } else {
-                return ResponseModelUtils.error("创建节点参数配置失败");
+                return ResponseRenderUtils.error("创建节点参数配置失败");
             }
         } catch (Exception e) {
             log.error("创建节点参数配置失败", e);
-            return ResponseModelUtils.error("创建节点参数配置失败: " + e.getMessage());
+            return ResponseRenderUtils.error("创建节点参数配置失败: " + e.getMessage());
         }
     }
 
@@ -104,20 +104,20 @@ public class NodeParamConfigController {
         try {
             // 验证参数是否为空
             if (config == null || config.getConfigId() == null) {
-                return ResponseModelUtils.error("参数不能为空，configId 必须存在");
+                return ResponseRenderUtils.error("参数不能为空，configId 必须存在");
             }
 
             // 调用服务层更新逻辑
             NodeParamConfigDO updatedConfig = nodeParamConfigService.update(config);
 
             if (updatedConfig != null) {
-                return ResponseModelUtils.render(updatedConfig);
+                return ResponseRenderUtils.render(updatedConfig);
             } else {
-                return ResponseModelUtils.error("更新节点参数配置失败");
+                return ResponseRenderUtils.error("更新节点参数配置失败");
             }
         } catch (Exception e) {
             log.error("更新节点参数配置失败", e);
-            return ResponseModelUtils.error("更新节点参数配置失败: " + e.getMessage());
+            return ResponseRenderUtils.error("更新节点参数配置失败: " + e.getMessage());
         }
     }
 
@@ -128,10 +128,10 @@ public class NodeParamConfigController {
     public ResultData<String> deleteNodeParamConfig(@PathVariable Integer configId) {
         try {
              nodeParamConfigService.deleteById(configId);
-            return ResponseModelUtils.render("节点参数配置删除成功");
+            return ResponseRenderUtils.render("节点参数配置删除成功");
         } catch (Exception e) {
             log.error("删除节点参数配置失败", e);
-            return ResponseModelUtils.error("删除节点参数配置失败: " + e.getMessage());
+            return ResponseRenderUtils.error("删除节点参数配置失败: " + e.getMessage());
         }
     }
 }

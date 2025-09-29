@@ -1,9 +1,10 @@
 package com.helianhealth.agent.config;
 
-import org.apache.ibatis.type.BaseTypeHandler;
-import org.apache.ibatis.type.JdbcType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.ibatis.type.BaseTypeHandler;
+import org.apache.ibatis.type.JdbcType;
+
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -21,7 +22,7 @@ public class ListIntegerTypeHandler extends BaseTypeHandler<List<Integer>> {
             return;
         }
         try {
-            // 将 List<Long> 序列化为 JSON 字符串存入数据库
+            // 将 List<Integer> 序列化为 JSON 字符串存入数据库
             String json = objectMapper.writeValueAsString(parameter);
             ps.setString(i, json);
         } catch (Exception e) {
@@ -48,22 +49,22 @@ public class ListIntegerTypeHandler extends BaseTypeHandler<List<Integer>> {
     }
 
     @Override
-    public void setNonNullParameter(PreparedStatement preparedStatement, int i, List<Integer> longs, JdbcType jdbcType) throws SQLException {
+    public void setNonNullParameter(PreparedStatement preparedStatement, int i, List<Integer> longs, JdbcType jdbcType) {
 
     }
 
     @Override
-    public List<Integer> getNullableResult(ResultSet resultSet, String s) throws SQLException {
+    public List<Integer> getNullableResult(ResultSet resultSet, String s) {
         return null;
     }
 
     @Override
-    public List<Integer> getNullableResult(ResultSet resultSet, int i) throws SQLException {
+    public List<Integer> getNullableResult(ResultSet resultSet, int i) {
         return null;
     }
 
     @Override
-    public List<Integer> getNullableResult(CallableStatement callableStatement, int i) throws SQLException {
+    public List<Integer> getNullableResult(CallableStatement callableStatement, int i) {
         return null;
     }
 
@@ -72,7 +73,7 @@ public class ListIntegerTypeHandler extends BaseTypeHandler<List<Integer>> {
             return null;
         }
         try {
-            // 将 JSON 字符串反序列化为 List<Long>
+            // 将 JSON 字符串反序列化为 List<Integer>
             return objectMapper.readValue(json, new TypeReference<List<Integer>>() {});
         } catch (Exception e) {
             throw new SQLException("Failed to deserialize JSON to List<Long>", e);
