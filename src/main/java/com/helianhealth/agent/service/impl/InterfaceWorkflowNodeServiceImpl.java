@@ -79,6 +79,7 @@ public class InterfaceWorkflowNodeServiceImpl implements InterfaceWorkflowNodeSe
 
     @Override
     public int save(WorkflowNodeCreateReq nodeCreateReq) {
+        String scheduleParamSourceType = nodeCreateReq.getScheduleParamSourceType();
         InterfaceWorkflowNodeDO build = InterfaceWorkflowNodeDO.builder()
                 .nodeName(nodeCreateReq.getNodeName())
                 .flowId(nodeCreateReq.getFlowId())
@@ -86,7 +87,8 @@ public class InterfaceWorkflowNodeServiceImpl implements InterfaceWorkflowNodeSe
                 .nodeType(NodeType.valueOf(nodeCreateReq.getNodeType()))
                 .metaInfo(nodeCreateReq.getMetaInfo())
                 .scheduleExpr(nodeCreateReq.getScheduleExpr())
-                .scheduleParamSourceType(ScheduleParamSourceType.valueOf(nodeCreateReq.getScheduleParamSourceType())).build();
+                .scheduleParamSourceType(scheduleParamSourceType == null || scheduleParamSourceType.isEmpty() ?
+                        null : ScheduleParamSourceType.valueOf(scheduleParamSourceType)).build();
 
         return flowNodeMapper.createNode(build);
     }
