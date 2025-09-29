@@ -29,6 +29,11 @@ public enum MappingType {
     BEAN_EXPRESSION,
 
     /**
+     * MAP只有一个key-map键值对
+     */
+    SINGLE_MAP,
+
+    /**
      * 直接映射,兼容数组的情况
      */
     DIRECT
