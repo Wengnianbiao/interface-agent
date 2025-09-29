@@ -28,7 +28,7 @@ public abstract class AbstractClientProxy implements InterfaceClientProxy, Param
     private ValueResolveService valueResolveService;
 
     @Autowired
-    private ResponseConvertHelper responseConvertHelper;
+    private ProxyConvertHelper proxyConvertHelper;
 
     @Override
     public Map<String, Object> remoteInvoke(InterfaceWorkflowNodeDO flowNode, Map<String, Object> businessData) {
@@ -74,7 +74,7 @@ public abstract class AbstractClientProxy implements InterfaceClientProxy, Param
 
         List<ParamTreeNode> rootNodes = buildParamTree(nodeConfigs, null, response, businessData);
 
-        return responseConvertHelper.convertResponse(flowNode, rootNodes);
+        return proxyConvertHelper.convertResponse(flowNode, rootNodes);
     }
 
     /**
@@ -126,7 +126,7 @@ public abstract class AbstractClientProxy implements InterfaceClientProxy, Param
                 .paramType(config.getTargetParamType())
                 .build();
 
-        // 不同的节点类型处理方式不同
+        // 根据节点类型处理
         switch (config.getTargetParamType()) {
             case OBJECT:
                 // 对象类型处理

@@ -1,18 +1,16 @@
 package com.helianhealth.agent.remote.database;
 
-import com.alibaba.fastjson2.JSONArray;
-import com.helianhealth.agent.enums.MappingSource;
 import com.helianhealth.agent.enums.MappingType;
 import com.helianhealth.agent.enums.ParamType;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
 import com.helianhealth.agent.model.domain.NodeParamConfigDO;
 import com.helianhealth.agent.model.dto.ParamTreeNode;
 import com.helianhealth.agent.remote.AbstractClientProxy;
+import com.helianhealth.agent.remote.ProxyConvertHelper;
 import com.helianhealth.agent.utils.JsonUtils;
-import com.helianhealth.agent.utils.ParamNodeUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,11 +21,11 @@ import java.util.Map;
 @Slf4j
 public class DatabaseClientProxy extends AbstractClientProxy {
 
-    private final DatabaseSqlHandler databaseSqlHandler;
+    @Autowired
+    private DatabaseSqlHandler databaseSqlHandler;
 
-    public DatabaseClientProxy(DatabaseSqlHandler databaseSqlHandler) {
-        this.databaseSqlHandler = databaseSqlHandler;
-    }
+    @Autowired
+    private ProxyConvertHelper proxyConvertHelper;
 
     @Override
     public Map<String, Object> doInvoke(InterfaceWorkflowNodeDO flowNode, List<ParamTreeNode> params) {
@@ -101,9 +99,7 @@ public class DatabaseClientProxy extends AbstractClientProxy {
      */
     private void doProcessArrayNodeType(NodeParamConfigDO config, List<NodeParamConfigDO> allNodes, Map<String, Object> businessData, Map<String, Object> rootBusinessData, ParamTreeNode node) {
         // 根据映射源进入迭代
-        Object sourceValue = config.getMappingSource() == MappingSource.INPUT ?
-                getSourceValue(config.getSourceParamKey(), rootBusinessData) :
-                getSourceValue(config.getSourceParamKey(), businessData);
+        Object sourceValue = proxyConvertHelper.convertSourceValue(config, businessData, rootBusinessData);
 
         if (config.getSourceParamType() == ParamType.OBJECT && sourceValue != null) {
             // 源参数是Object，包装成大小为1的数组
@@ -142,28 +138,5 @@ public class DatabaseClientProxy extends AbstractClientProxy {
             // 其他情况创建空数组
             node.setChildren(new ArrayList<>());
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private Object getSourceValue(String sourceParamKey, Map<String, Object> businessData) {
-        if (businessData == null || StringUtils.isEmpty(sourceParamKey)) {
-            return null;
-        }
-        String[] keys = sourceParamKey.split("\\.");
-        Object current = businessData;
-
-        for (String key : keys) {
-            if (!(current instanceof Map)) {
-                return null; // 非 Map 类型无法继续深入
-            }
-
-            Map<String, Object> currentMap = (Map<String, Object>) current;
-            current = currentMap.get(key);
-            if (current == null) {
-                return null;
-            }
-        }
-
-        return current;
     }
 }

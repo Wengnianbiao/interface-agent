@@ -56,7 +56,7 @@ public class WorkFlowEngineScheduler {
         Map<String, Object> businessDataAfterPost = businessDataPostProcessor.postParamProcessor(
                 flowNode.getParamFilterExpr(), businessData);
         if (businessDataAfterPost == null || businessDataAfterPost.isEmpty()) {
-            // 经过过滤后如果为Null就不进行处理
+            // 经过过滤后如果为null就不进行处理
             return new HashMap<>();
         }
         //  todo 单节点可能需要拆分为多节点调用,e.g.入参为列表但是接口只支持对象

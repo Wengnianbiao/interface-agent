@@ -1,7 +1,8 @@
 package com.helianhealth.agent.remote;
 
-import com.helianhealth.agent.enums.NodeType;
+import com.helianhealth.agent.enums.MappingSource;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowNodeDO;
+import com.helianhealth.agent.model.domain.NodeParamConfigDO;
 import com.helianhealth.agent.model.dto.ParamTreeNode;
 import com.helianhealth.agent.utils.JsonUtils;
 import com.helianhealth.agent.utils.ParamNodeUtils;
@@ -11,11 +12,10 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Component
 @Slf4j
-public class ResponseConvertHelper {
+public class ProxyConvertHelper {
 
     public Map<String, Object> convertResponse(InterfaceWorkflowNodeDO flowNode, List<ParamTreeNode> paramTree) {
         // 获取节点的元信息
@@ -47,6 +47,33 @@ public class ResponseConvertHelper {
 
     private Map<String, Object> convertToJsonFormatMap(List<ParamTreeNode> paramTree) {
         return ParamNodeUtils.convertToJsonFormatMap(paramTree);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Object convertSourceValue(NodeParamConfigDO config, Map<String, Object> businessData, Map<String, Object> rootBusinessData) {
+        MappingSource mappingSource = config.getMappingSource();
+        Map<String, Object> tagertMap = mappingSource == MappingSource.INPUT ? rootBusinessData : businessData;
+        String sourceParamKey = config.getSourceParamKey();
+        // 如果源参数key为空，则说明不需要进行转化
+        if (StringUtils.isEmpty(sourceParamKey)) {
+            return businessData;
+        }
+        String[] keys = sourceParamKey.split("\\.");
+        Object current = tagertMap;
+
+        for (String key : keys) {
+            if (!(current instanceof Map)) {
+                return null; // 非 Map 类型无法继续深入
+            }
+
+            Map<String, Object> currentMap = (Map<String, Object>) current;
+            current = currentMap.get(key);
+            if (current == null) {
+                return null;
+            }
+        }
+
+        return current;
     }
 }
 
