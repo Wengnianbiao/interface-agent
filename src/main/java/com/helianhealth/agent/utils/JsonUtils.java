@@ -1,18 +1,11 @@
 package com.helianhealth.agent.utils;
 
-import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.helianhealth.agent.exception.JsonUtilsException;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Text;
-
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class JsonUtils {
@@ -102,41 +95,21 @@ public class JsonUtils {
     }
 
     /**
-     * 将 XML 元素（org.w3c.dom.Element）递归转换为 Map，处理同名标签为数组
+     * 解析metaInfo JSON字符串为Map<String, Object>
+     *
+     * @param metaInfo 包含元信息的JSON字符串
+     * @return 解析后的Map对象，如果metaInfo为空则返回空Map
      */
-    public static Map<String, Object> xmlElementToMap(Element element) {
-        Map<String, Object> map = new HashMap<>();
-        NodeList childNodes = element.getChildNodes();
-
-        for (int i = 0; i < childNodes.getLength(); i++) {
-            Node node = childNodes.item(i);
-            if (node instanceof Element) {
-                Element child = (Element) node;
-                String tagName = child.getTagName();
-                Object existingValue = map.get(tagName);
-
-                Object childValue;
-                if (child.getChildNodes().getLength() == 1 && child.getFirstChild() instanceof Text) {
-                    // 叶子节点，取文本值
-                    childValue = child.getTextContent().trim();
-                } else {
-                    // 非叶子节点，递归处理
-                    childValue = xmlElementToMap(child);
-                }
-
-                if (existingValue == null) {
-                    map.put(tagName, childValue);
-                } else if (existingValue instanceof JSONArray) {
-                    ((JSONArray) existingValue).add(childValue);
-                } else {
-                    JSONArray array = new JSONArray();
-                    array.add(existingValue);
-                    array.add(childValue);
-                    map.put(tagName, array);
-                }
-            }
+    public static Map<String, Object> parseMetaInfo(String metaInfo) {
+        if (metaInfo == null || metaInfo.isEmpty()) {
+            return new HashMap<>();
         }
-        return map;
+
+        try {
+            return objectMapper.readValue(metaInfo, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            throw new RuntimeException("Error parsing metaInfo: " + e.getMessage(), e);
+        }
     }
 }
 

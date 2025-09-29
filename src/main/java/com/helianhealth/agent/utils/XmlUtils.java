@@ -203,13 +203,12 @@ public class XmlUtils {
             // 解析metaInfo获取配置
             Map<String, Object> metaMap = new HashMap<>();
             if (metaInfo != null && !metaInfo.isEmpty()) {
-                metaMap = JSON.parseObject(metaInfo, Map.class);
+                metaMap = JsonUtils.parseMetaInfo(metaInfo);
             }
 
             // 获取命名空间配置
             String namespaceURI = (String) metaMap.get("requestNamespace");
             String requestElementName = (String) metaMap.get("requestElementName");
-            String requestType = (String) metaMap.getOrDefault("requestType", "xml");
             // 新增配置项，控制是否使用CDATA解析
             boolean useCdata = (boolean) metaMap.getOrDefault("useCdata", false);
 
@@ -239,16 +238,7 @@ public class XmlUtils {
                 throw new IllegalArgumentException("未找到请求元素: " + requestElementName);
             }
 
-            Map<String, Object> result = elementToMap(requestElement);
-
-
-            if ("json".equalsIgnoreCase(requestType)) {
-                String jsonStr = JSON.toJSONString(result);
-                return JsonUtils.toMap(jsonStr);
-            } else {
-                // XML格式直接返回Map
-                return result;
-            }
+            return elementToMap(requestElement);
         } catch (Exception e) {
             log.error("解析SOAP请求失败", e);
             throw new RuntimeException("解析SOAP请求失败: " + e.getMessage(), e);
