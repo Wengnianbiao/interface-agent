@@ -6,7 +6,7 @@ import com.helianhealth.agent.exception.WorkflowBusinessException;
 import com.helianhealth.agent.model.domain.InterfaceWorkflowDO;
 import com.helianhealth.agent.service.InterfaceWorkflowService;
 import com.helianhealth.agent.utils.JsonUtils;
-import com.helianhealth.agent.utils.ResponseModelUtils;
+import com.helianhealth.agent.utils.ResponseRenderUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -29,8 +29,6 @@ public class FlowNodeDispatcher {
 
     /**
      * 适配jarvis的参数解析调度
-     * @param request 请求参数
-     * @return 响应
      */
     public ResultData<Object> jarvisDispatch(JarvisRequest request) {
         try {
@@ -45,6 +43,7 @@ public class FlowNodeDispatcher {
                 return processJarvisRsp(scheduleRsp);
             } else {
                 log.error(WorkflowBusinessException.METHOD_NOT_SUPPORT.getMessage());
+                // 对于没有实现jarvis的接口,直接返回成功
                 return ResultData.ok();
             }
         } catch (Exception e) {
@@ -53,20 +52,35 @@ public class FlowNodeDispatcher {
         }
     }
 
+    private ResultData<Object> processJarvisRsp(Map<String, Object> flowNodeResponse) {
+        Object code = flowNodeResponse.get("code");
+        String message = (String) flowNodeResponse.get("message");
+        Object rsp = flowNodeResponse.get("rsp");
+
+        if ("200".equals(code)) {
+            return ResponseRenderUtils.render(rsp);
+        } else {
+            return ResponseRenderUtils.error(message);
+        }
+    }
+
+    /**
+     * open api 调度
+     */
     public String dispatch(String request, String interfaceUri) {
         try {
             // 1、根据调用URI获取对应的工作流
             Optional<InterfaceWorkflowDO> workflowOptional = workflowService.findByInterfaceUri(interfaceUri);
             if (workflowOptional.isPresent()) {
                 InterfaceWorkflowDO workflow = workflowOptional.get();
-                // 2、参数预处理,根据入参contentType转化为Map
+                // 2、参数预处理,根据contentType转化为Map
                 Map<String, Object> businessData = contentParser.parseRequest(workflow, request);
 
-                // 3、调度工作流统一入参格式为Map<String,Object>
+                // 3、调度工作流
                 Map<String, Object> scheduleRsp = workFlowEngineScheduler.schedule(workflow.getFirstFlowNodes(),
                         businessData);
 
-                // 4、根据工作流内容类型构建响应
+                // 4、根据工作流contentType构建响应
                 return contentParser.responseBuilder(workflow, scheduleRsp);
             } else {
                 log.error(WorkflowBusinessException.METHOD_NOT_SUPPORT.getMessage());
@@ -77,17 +91,4 @@ public class FlowNodeDispatcher {
             return null;
         }
     }
-
-    private ResultData<Object> processJarvisRsp(Map<String, Object> flowNodeResponse) {
-        Object code = flowNodeResponse.get("code");
-        String message = (String) flowNodeResponse.get("message");
-        Object rsp = flowNodeResponse.get("rsp");
-
-        if ("200".equals(code)) {
-            return ResponseModelUtils.render(rsp);
-        } else {
-            return ResponseModelUtils.error(message);
-        }
-    }
-
 }
