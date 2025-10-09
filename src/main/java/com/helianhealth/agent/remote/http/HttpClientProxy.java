@@ -129,7 +129,6 @@ public class HttpClientProxy extends AbstractClientProxy {
                                                            Map<String, Object> rootBusinessData,
                                                            ParamTreeNode node) {
         // 目标参数是数组,原参数可能是数组也可能是单个对象
-        // 因为对于XML解析，对于只有一个元素的数组和对象的解析结果是一致的无法区分是对象还是数组都会解析为Map
         List<ParamTreeNode> allArrayChildren = new ArrayList<>();
         if (sourceValue instanceof List) {
             List<?> sourceList = (List<?>) sourceValue;
@@ -155,13 +154,6 @@ public class HttpClientProxy extends AbstractClientProxy {
                     allArrayChildren.addAll(nestedArrayChildren);
                 }
             }
-        } else if (sourceValue instanceof Map) {
-            // 兼容XML一维数组场景为MAP
-            List<ParamTreeNode> arrayChildren = buildParamTree(allNodes,
-                    config.getConfigId(),
-                    JsonUtils.toMap(sourceValue),
-                    rootBusinessData);
-            allArrayChildren.addAll(arrayChildren);
         } else {
             // 其他情况下就是数组为一维的单个基础数据类型
             Map<String, Object> itemMap = new HashMap<>();

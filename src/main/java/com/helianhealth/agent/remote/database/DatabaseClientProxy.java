@@ -124,12 +124,6 @@ public class DatabaseClientProxy extends AbstractClientProxy {
                                 rootBusinessData);
                         allArrayChildren.addAll(arrayChildren);
                     }
-                } else if (sourceValue instanceof Map) {
-                    List<ParamTreeNode> arrayChildren = buildParamTree(allNodes,
-                            config.getConfigId(),
-                            JsonUtils.toMap(sourceValue),
-                            rootBusinessData);
-                    allArrayChildren.addAll(arrayChildren);
                 }
 
                 node.setChildren(allArrayChildren);

@@ -67,6 +67,7 @@ public abstract class AbstractClientProxy implements InterfaceClientProxy, Param
      * @return 处理后的结果
      */
     public Map<String, Object> postProcess(InterfaceWorkflowNodeDO flowNode, Map<String, Object> response, Map<String, Object> businessData) {
+        // 获取的是后置参数配置
         List<NodeParamConfigDO> nodeConfigs = nodeParamConfigService.selectPostProcessConfigByNodeId(flowNode.getNodeId());
         if (CollectionUtils.isEmpty(nodeConfigs)) {
             return new HashMap<>();
