@@ -28,6 +28,14 @@ public class JsonUtils {
         }
     }
 
+    public static Map<String, Object> fromJsonStringToObjectMap(String jsonString) {
+        try {
+            return objectMapper.readValue(jsonString, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            throw new RuntimeException("Error converting JSON to list", e);
+        }
+    }
+
     /**
      * 将不同类型的对象转换为 Map<String, Object>
      * 支持 JSONObject、String、Map 等类型
@@ -43,16 +51,6 @@ public class JsonUtils {
             // 如果已经是 Map，直接返回
             if (obj instanceof Map) {
                 return (Map<String, Object>) obj;
-            }
-
-            // 如果是 JSONObject，直接转换，避免序列化/反序列化开销
-            if (obj instanceof JSONObject) {
-                JSONObject jsonObject = (JSONObject) obj;
-                Map<String, Object> map = new HashMap<>();
-                for (String key : jsonObject.keySet()) {
-                    map.put(key, jsonObject.get(key));
-                }
-                return map;
             }
 
             // 如果是字符串，解析为 Map

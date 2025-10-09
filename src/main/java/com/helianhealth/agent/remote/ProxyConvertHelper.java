@@ -26,7 +26,7 @@ public class ProxyConvertHelper {
         }
 
         try {
-            Map<String, Object> metaJson = JsonUtils.toMap(metaInfo);
+            Map<String, Object> metaJson = JsonUtils.fromJsonStringToObjectMap(metaInfo);
             // 获取响应类型，默认为JSON
             String responseType = (String) metaJson.get("responseType");
             if (StringUtils.isEmpty(responseType)) {
