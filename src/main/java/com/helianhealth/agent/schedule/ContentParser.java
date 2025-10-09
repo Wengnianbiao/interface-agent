@@ -21,12 +21,12 @@ public class ContentParser {
 
         WorkflowContentType contentType = workflow.getContentType();
         try {
-            if (WorkflowContentType.JSON.equals(contentType)) {
-                // 解析JSON为Map
-                return parseJsonToMap(request);
-            } else if (WorkflowContentType.XML.equals(contentType)) {
+            if (WorkflowContentType.XML.equals(contentType)) {
                 // 解析SOAP XML为Map
                 return parseSoapXmlToMap(request, workflow.getContentMetaInfo());
+            } else {
+                // 默认解析JSON为Map
+                return parseJsonToMap(request);
             }
         } catch (Exception e) {
             log.error("解析请求内容失败，类型: {}, 错误: {}", contentType, e.getMessage(), e);
@@ -39,15 +39,15 @@ public class ContentParser {
      * 解析JSON字符串为Map
      */
     private Map<String, Object> parseJsonToMap(String json) {
-        return JsonUtils.toMap(json);
+        return JsonUtils.fromJsonStringToObjectMap(json);
     }
 
     /**
      * 解析SOAP XML字符串为Map
      * 处理SOAP信封，提取CDATA中的实际业务数据
      */
-    private Map<String, Object> parseSoapXmlToMap(String xml, String metaInfo) {
-        return XmlUtils.parseRequestXml(xml, metaInfo);
+    private Map<String, Object> parseSoapXmlToMap(String xml, String contentMetaInfo) {
+        return XmlUtils.parseRequestXml(xml, contentMetaInfo);
     }
 
     public String responseBuilder(InterfaceWorkflowDO workflow, Map<String, Object> response) {

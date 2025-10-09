@@ -1,7 +1,6 @@
 package com.helianhealth.agent.utils;
 
 import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -21,7 +20,6 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,6 +28,151 @@ import java.util.Map;
 public class XmlUtils {
 
     private static final Logger log = LoggerFactory.getLogger(XmlUtils.class);
+
+    /**
+     * 解析XML节点
+     * 核心规则：
+     * 1. 有属性：文本（含空值）用标签名存，空文本设为 null
+     * 2. 无属性：直接用标签名存文本，空文本设为 null
+     * 3. 同标签名子元素自动转为 List
+     */
+    public static Object parseElement(Element element) {
+        // 处理纯文本节点（无子元素、无属性）
+        if (isPlainTextNode(element)) {
+            return parseTextValue(element);
+        }
+
+        // 处理复杂节点（返回Map）
+        Map<String, Object> resultMap = new LinkedHashMap<>();
+        String tagName = element.getNodeName();
+
+        // 1. 属性解析
+        addAttributesToMap(element, resultMap);
+
+        // 2. 标签内容解析
+        String textValue = parseTextValue(element);
+        if (textValue != null) {
+            resultMap.put(tagName, textValue);
+        }
+
+        // 3. 子元素解析
+        Map<String, List<Element>> childElements = groupChildElementsByTagName(element);
+        addChildElementsToMap(childElements, resultMap);
+
+        // 4. 简化纯容器节点（仅含一个子元素且无属性）
+        return simplifyContainerNode(element, resultMap, childElements);
+    }
+
+    /**
+     * 判断是否为纯文本节点（无子元素、无属性）
+     */
+    private static boolean isPlainTextNode(Element element) {
+        // 场景1：普通纯文本节点（含文本）
+        boolean hasTextNode = element.getChildNodes().getLength() == 1
+                && element.getChildNodes().item(0).getNodeType() == Node.TEXT_NODE;
+        // 场景2：自闭合标签（无子节点）
+        boolean isEmptyTag = element.getChildNodes().getLength() == 0;
+
+        return (hasTextNode || isEmptyTag) && element.getAttributes().getLength() == 0;
+    }
+
+    /**
+     * 解析文本节点的值（过滤空白）
+     */
+    private static String parseTextValue(Element element) {
+        StringBuilder textBuilder = new StringBuilder();
+        NodeList childNodes = element.getChildNodes();
+
+        for (int i = 0; i < childNodes.getLength(); i++) {
+            Node node = childNodes.item(i);
+            if (node.getNodeType() == Node.TEXT_NODE) {
+                String text = node.getNodeValue().trim();
+                if (!text.isEmpty()) {
+                    textBuilder.append(text);
+                }
+            }
+        }
+
+        // 若文本长度为0，说明是空标签，返回null
+        return textBuilder.length() > 0 ? textBuilder.toString() : null;
+    }
+
+    /**
+     * 将元素的属性添加到Map
+     */
+    private static void addAttributesToMap(Element element, Map<String, Object> map) {
+        NamedNodeMap attributes = element.getAttributes();
+        if (attributes == null || attributes.getLength() == 0) {
+            return;
+        }
+
+        for (int i = 0; i < attributes.getLength(); i++) {
+            Node attr = attributes.item(i);
+            map.put(attr.getNodeName(), attr.getNodeValue());
+        }
+    }
+
+    /**
+     * 将子元素按标签名分组
+     */
+    private static Map<String, List<Element>> groupChildElementsByTagName(Element element) {
+        Map<String, List<Element>> childElements = new HashMap<>();
+        NodeList childNodes = element.getChildNodes();
+
+        for (int i = 0; i < childNodes.getLength(); i++) {
+            Node node = childNodes.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                Element child = (Element) node;
+                String childTagName = child.getNodeName();
+                childElements.computeIfAbsent(childTagName, k -> new ArrayList<>()).add(child);
+            }
+        }
+
+        return childElements;
+    }
+
+    /**
+     * 解析子元素并添加到Map（处理数组和对象）
+     */
+    private static void addChildElementsToMap(Map<String, List<Element>> childElements, Map<String, Object> map) {
+        for (Map.Entry<String, List<Element>> entry : childElements.entrySet()) {
+            String childTagName = entry.getKey();
+            List<Element> elements = entry.getValue();
+            // 数组的场景:同名子节点数量大于1或者节点名称相同
+            Object value = parseChildElementValue(elements, childElements.size() == 1);
+            map.put(childTagName, value);
+        }
+    }
+
+    /**
+     * 解析子元素的值（数组或单个对象）
+     */
+    private static Object parseChildElementValue(List<Element> elements, boolean isSingleType) {
+        // 数组场景（多个元素或单类型子元素）
+        if (elements.size() > 1 || isSingleType) {
+            List<Object> list = new ArrayList<>();
+            for (Element e : elements) {
+                list.add(parseElement(e)); // 递归解析
+            }
+            return list;
+        }
+
+        // 单个对象场景
+        return parseElement(elements.get(0));
+    }
+
+    /**
+     * 简化纯容器节点（消除冗余嵌套）
+     */
+    private static Object simplifyContainerNode(Element element, Map<String, Object> map, Map<String, List<Element>> childElements) {
+        // 条件：无属性 + 只有一种子元素 + 无额外文本
+        if (element.getAttributes().getLength() == 0
+                && childElements.size() == 1
+                && !map.containsKey(element.getNodeName())) {
+            return map.values().iterator().next();
+        }
+        return map;
+    }
 
     /**
      * 将XML字符串转换为Map<String, Object>
@@ -62,7 +205,7 @@ public class XmlUtils {
             // 解析metaInfo获取配置
             Map<String, Object> metaMap = new HashMap<>();
             if (metaInfo != null && !metaInfo.isEmpty()) {
-                metaMap = JSON.parseObject(metaInfo, Map.class);
+                metaMap = JsonUtils.parseMetaInfo(metaInfo);
             }
 
             // 获取命名空间配置
@@ -123,7 +266,7 @@ public class XmlUtils {
             }
         }
 
-        // 收集文本内容和子元素
+        // 收集文本内容或子元素
         StringBuilder textContent = new StringBuilder();
         List<Element> childElements = new ArrayList<>();
 
@@ -147,8 +290,8 @@ public class XmlUtils {
             Object childValue = elementToMap(childElement);
 
             // 如果子元素是纯文本节点，直接提取值
-            if (childValue instanceof Map && ((Map<?,?>) childValue).size() == 1) {
-                Map<?,?> childMap = (Map<?,?>) childValue;
+            if (childValue instanceof Map && ((Map<?, ?>) childValue).size() == 1) {
+                Map<?, ?> childMap = (Map<?, ?>) childValue;
                 Object firstValue = childMap.values().iterator().next();
                 // 如果子节点只包含自身标签和文本值，直接使用文本值
                 if (firstValue instanceof String && childMap.containsKey(tagName)) {
@@ -190,26 +333,26 @@ public class XmlUtils {
         return map;
     }
 
-
     /**
      * 解析SOAP请求XML，支持命名空间配置
      *
-     * @param requestXml 原始SOAP请求XML
-     * @param metaInfo   元信息（包含命名空间等配置）
+     * @param requestXml      原始SOAP请求XML
+     * @param contentMetaInfo 入参元信息
      * @return 解析后的Map对象
      */
-    public static Map<String, Object> parseRequestXml(String requestXml, String metaInfo) {
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> parseRequestXml(String requestXml, String contentMetaInfo) {
         try {
             // 解析metaInfo获取配置
             Map<String, Object> metaMap = new HashMap<>();
-            if (metaInfo != null && !metaInfo.isEmpty()) {
-                metaMap = JsonUtils.parseMetaInfo(metaInfo);
+            if (contentMetaInfo != null && !contentMetaInfo.isEmpty()) {
+                metaMap = JsonUtils.parseMetaInfo(contentMetaInfo);
             }
 
             // 获取命名空间配置
             String namespaceURI = (String) metaMap.get("requestNamespace");
             String requestElementName = (String) metaMap.get("requestElementName");
-            // 新增配置项，控制是否使用CDATA解析
+            // 控制是否使用CDATA解析
             boolean useCdata = (boolean) metaMap.getOrDefault("useCdata", false);
 
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -238,7 +381,7 @@ public class XmlUtils {
                 throw new IllegalArgumentException("未找到请求元素: " + requestElementName);
             }
 
-            return elementToMap(requestElement);
+            return (Map<String, Object>) parseElement(requestElement);
         } catch (Exception e) {
             log.error("解析SOAP请求失败", e);
             throw new RuntimeException("解析SOAP请求失败: " + e.getMessage(), e);
