@@ -90,7 +90,7 @@ public class DatabaseClientProxy extends AbstractClientProxy {
     }
 
     /**
-     * 数组的情况在构建的时候统一使用一个虚拟节点来封装对象
+     * database模式下的数组构建规则会存在直接映射的场景
      * @param config 节点参数配置
      * @param allNodes 所有节点参数配置
      * @param businessData 业务数据
@@ -108,9 +108,10 @@ public class DatabaseClientProxy extends AbstractClientProxy {
                     JsonUtils.toMap(sourceValue),
                     rootBusinessData);
             node.setChildren(arrayChildren);
-        } else if (config.getSourceParamType() == ParamType.ARRAY && sourceValue != null) {
-            // 目标参数是数组,原参数可能是数组也可能是单个对象(因为xml解析的时候还是按照Map解析)
-            // 必须加上一个虚拟节点来封装对象
+        } else if (config.getSourceParamType() == ParamType.ARRAY ||
+                config.getSourceParamType() == ParamType.PURE_ARRAY
+                && sourceValue != null) {
+            // 直接映射的场景直接赋值
             if (config.getMappingType().equals(MappingType.DIRECT)) {
                 node.setParamValue(sourceValue);
             } else {

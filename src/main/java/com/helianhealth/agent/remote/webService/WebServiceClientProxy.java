@@ -102,17 +102,43 @@ public class WebServiceClientProxy extends AbstractClientProxy {
                     rootBusinessData);
             node.setChildren(arrayChildren);
         } else if (config.getSourceParamType() == ParamType.ARRAY && sourceValue != null) {
+            // 目标参数是数组,原参数可能是数组也可能是单个对象
             List<ParamTreeNode> allArrayChildren = new ArrayList<>();
             if (sourceValue instanceof List) {
                 List<?> sourceList = (List<?>) sourceValue;
-                for (Object item : sourceList) {
-                    List<ParamTreeNode> arrayChildren = buildParamTree(allNodes,
-                            config.getConfigId(),
-                            JsonUtils.toMap(item),
-                            rootBusinessData);
-                    allArrayChildren.addAll(arrayChildren);
+                Object o = sourceList.get(0);
+                // 数组可以是基础数据类型或对象
+                if (o instanceof Map) {
+                    for (Object item : sourceList) {
+                        List<ParamTreeNode> nestedArrayChildren = buildParamTree(allNodes,
+                                config.getConfigId(),
+                                JsonUtils.toMap(item),
+                                rootBusinessData);
+                        allArrayChildren.addAll(nestedArrayChildren);
+                    }
+                } else {
+                    // 对于基础数据类型item是一个值,将目标映射key作为Map的key,item作为Map的value
+                    for (Object item : sourceList) {
+                        Map<String, Object> itemMap = new HashMap<>();
+                        itemMap.put(config.getTargetParamKey(), item);
+                        List<ParamTreeNode> nestedArrayChildren = buildParamTree(allNodes,
+                                config.getConfigId(),
+                                JsonUtils.toMap(itemMap),
+                                rootBusinessData);
+                        allArrayChildren.addAll(nestedArrayChildren);
+                    }
                 }
+            } else {
+                // 其他情况下就是数组为一维的单个基础数据类型
+                Map<String, Object> itemMap = new HashMap<>();
+                itemMap.put(config.getTargetParamKey(), sourceValue);
+                List<ParamTreeNode> nestedArrayChildren = buildParamTree(allNodes,
+                        config.getConfigId(),
+                        JsonUtils.toMap(itemMap),
+                        rootBusinessData);
+                allArrayChildren.addAll(nestedArrayChildren);
             }
+
             node.setChildren(allArrayChildren);
         } else {
             // 其他情况创建空数组
