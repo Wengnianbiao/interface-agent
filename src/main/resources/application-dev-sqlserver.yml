@@ -7,7 +7,7 @@ spring:
     agent:
       type: com.alibaba.druid.pool.DruidDataSource
       driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
-      url: jdbc:sqlserver://10.20.4.194:1433;DatabaseName=interface_agent;encrypt=false;trustServerCertificate=false
+      url: jdbc:sqlserver://10.20.4.245:1433;DatabaseName=interface_agent;encrypt=false;trustServerCertificate=false
       username: sa
       password: Hjk@2022!@
       initial-size: 10
