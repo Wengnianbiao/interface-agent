@@ -4,13 +4,13 @@ CREATE TABLE interface_workflow
     -- 工作流ID，自增主键，不允许为空、不可更新
     flow_id INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     -- 工作流名称，描述工作流的名称信息，允许为空
-    flow_name VARCHAR(50) NULL,
-    -- 接口URI，上游(Jarvis)调用接口的路由地址，与工作流一对一映射，允许为空
-    interface_uri VARCHAR(100) NULL,
-    -- 接口参数类型,JSON、XML
+    flow_name VARCHAR(100) NULL,
+    -- 接口URI，上游(如Jarvis)调用接口的路由地址，与工作流一对一映射，允许为空
+    interface_uri VARCHAR(150) NULL,
+    -- 接口入参参数类型,JSON、XML
     content_type VARCHAR(20) NULL,
     -- 接口入参元数据信息
-    content_meta_info NVARCHAR(MAX) NULL,
+    content_meta_info NVARCHAR(255) NULL,
     -- 工作流首节点，存储起始节点ID列表（逗号分隔的Long类型字符串），允许为空
     first_flow_nodes VARCHAR(50) NULL,
     -- 状态标识，1-启用，0-禁用，允许为空
@@ -23,8 +23,8 @@ CREATE TABLE interface_workflow_node
     -- 节点ID，自增主键，不允许为空、不可更新
     node_id INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     -- 节点名称，描述工作流的节点名称信息，允许为空
-    node_name VARCHAR(50) NULL,
-    -- 工作流ID，这里假设长度根据实际情况设置，允许为空（可根据业务调整是否允许空）
+    node_name VARCHAR(100) NULL,
+    -- 工作流ID，这里假设长度根据实际情况设置，允许为空
     flow_id INT NULL,
     -- 参数预处理表达式
     param_filter_expr VARCHAR(255) NULL,
@@ -34,8 +34,8 @@ CREATE TABLE interface_workflow_node
     meta_info NVARCHAR(MAX) NULL,
     -- 调度表达式
     schedule_expr VARCHAR(255) NULL,
-    -- 参数预处理表达式
-    schedule_param_source_type VARCHAR(50) NULL
+    -- 调度参数来源
+    schedule_param_source_type VARCHAR(25) NULL
 );
 
 -- 工作流节点参数配置表
